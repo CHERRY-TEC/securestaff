@@ -7,31 +7,47 @@
         body { font-family: Arial, sans-serif; margin: 0; background: #f4f6f8; color: #222; }
         header { background: #1f2d3d; color: #fff; padding: 16px 24px; }
         .container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
-        .btn { display: inline-block; background: #1f2d3d; color: #fff; padding: 10px 16px;
-               text-decoration: none; border-radius: 4px; margin: 6px 6px 6px 0; }
-        .btn:hover { background: #2c3e50; }
         .card { background: #fff; padding: 20px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.1); margin-bottom: 16px; }
         footer { text-align: center; padding: 20px; color: #888; }
+        .portal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .portal { padding: 24px; border-radius: 8px; text-align: center; }
+        .portal h2 { margin-top: 0; }
+        .portal a { display: inline-block; margin-top: 12px; padding: 10px 24px; color: #fff; text-decoration: none; border-radius: 4px; }
+        .owner { background: #1f2d3d; }
+        .owner a { background: #27ae60; }
+        .owner a:hover { background: #219a52; }
+        .client { background: #2c3e50; }
+        .client a { background: #2980b9; }
+        .client a:hover { background: #2471a3; }
     </style>
 </head>
 <body>
     <header>
         <h1>SecureStaff</h1>
-        <p>Connecting security workers with companies — managed by you.</p>
+        <p>Security job middleman platform</p>
     </header>
     <div class="container">
         <div class="card">
-            <h2>Welcome</h2>
-            <p>You are the middleman appointing security jobs to workers at companies.</p>
-            <a class="btn" href="{{ url_for('auth.login') }}">Login</a>
-            <a class="btn" href="{{ url_for('auth.register', role='worker') }}">Register as Worker</a>
-            <a class="btn" href="{{ url_for('auth.register', role='company') }}">Register as Company</a>
+            <h2>Welcome to SecureStaff</h2>
+            <p>Choose your portal to continue</p>
         </div>
-        <div class="card">
+        <div class="portal-grid">
+            <div class="portal owner">
+                <h2>Owner Portal</h2>
+                <p>Manage users, assign workers to jobs</p>
+                <a href="{{ url_for('auth.owner_login') }}">Owner Login</a>
+            </div>
+            <div class="portal client">
+                <h2>Client Portal</h2>
+                <p>Post jobs, view assignments</p>
+                <a href="{{ url_for('auth.client_login') }}">Client Login</a>
+            </div>
+        </div>
+        <div class="card" style="margin-top:20px">
             <h3>How it works</h3>
             <ol>
-                <li>Companies post security job openings.</li>
-                <li>You (admin) assign suitable workers to those jobs.</li>
+                <li>Clients post security job openings.</li>
+                <li>Owner assigns suitable workers to those jobs.</li>
                 <li>Workers accept or decline assignments.</li>
             </ol>
         </div>

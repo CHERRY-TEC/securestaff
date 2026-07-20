@@ -11,20 +11,32 @@ def index():
     return render_template('index.html')
 
 
-@main.route('/admin')
+# ── Owner Routes ──
+
+@main.route('/owner')
 @login_required
-def admin_dashboard():
+def owner_dashboard():
     if current_user.role != 'admin':
         return redirect(url_for('main.index'))
     workers = User.query.filter_by(role='worker').all()
     companies = User.query.filter_by(role='company').all()
     jobs = Job.query.all()
     assignments = Assignment.query.all()
-    return render_template('admin_dashboard.html', workers=workers,
+    return render_template('owner_dashboard.html', workers=workers,
                            companies=companies, jobs=jobs, assignments=assignments)
 
 
-@main.route('/admin/assign', methods=['POST'])
+@main.route('/owner/users')
+@login_required
+def owner_users():
+    if current_user.role != 'admin':
+        return redirect(url_for('main.index'))
+    workers = User.query.filter_by(role='worker').all()
+    companies = User.query.filter_by(role='company').all()
+    return render_template('owner_users.html', workers=workers, companies=companies)
+
+
+@main.route('/owner/assign', methods=['POST'])
 @login_required
 def assign_job():
     if current_user.role != 'admin':
@@ -37,21 +49,33 @@ def assign_job():
         db.session.add(a)
         db.session.commit()
         flash('Worker assigned to job')
-    return redirect(url_for('main.admin_dashboard'))
+    return redirect(url_for('main.owner_dashboard'))
 
 
-@main.route('/company')
+@main.route('/owner/jobs')
 @login_required
-def company_dashboard():
+def owner_jobs():
+    if current_user.role != 'admin':
+        return redirect(url_for('main.index'))
+    jobs = Job.query.all()
+    return render_template('owner_jobs.html', jobs=jobs)
+
+
+# ── Client Routes ──
+
+@main.route('/clients')
+@login_required
+def client_dashboard():
     if current_user.role != 'company':
         return redirect(url_for('main.index'))
     jobs = Job.query.filter_by(company_id=current_user.id).all()
-    return render_template('company_dashboard.html', jobs=jobs)
+    assignments = Assignment.query.join(Job).filter(Job.company_id == current_user.id).all()
+    return render_template('client_dashboard.html', jobs=jobs, assignments=assignments)
 
 
-@main.route('/company/post', methods=['GET', 'POST'])
+@main.route('/clients/post', methods=['GET', 'POST'])
 @login_required
-def post_job():
+def client_post_job():
     if current_user.role != 'company':
         return redirect(url_for('main.index'))
     if request.method == 'POST':
@@ -61,10 +85,21 @@ def post_job():
                   company_id=current_user.id, status='open')
         db.session.add(job)
         db.session.commit()
-        flash('Job posted')
-        return redirect(url_for('main.company_dashboard'))
-    return render_template('post_job.html')
+        flash('Job posted successfully')
+        return redirect(url_for('main.client_dashboard'))
+    return render_template('client_post_job.html')
 
+
+@main.route('/clients/assignments')
+@login_required
+def client_assignments():
+    if current_user.role != 'company':
+        return redirect(url_for('main.index'))
+    assignments = Assignment.query.join(Job).filter(Job.company_id == current_user.id).all()
+    return render_template('client_assignments.html', assignments=assignments)
+
+
+# ── Worker Routes (unchanged) ──
 
 @main.route('/worker')
 @login_required
