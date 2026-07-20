@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>SecureStaff - Security Job Middleman</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background: #f4f6f8; color: #222; }
+        header { background: #1f2d3d; color: #fff; padding: 16px 24px; }
+        .container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+        .btn { display: inline-block; background: #1f2d3d; color: #fff; padding: 10px 16px;
+               text-decoration: none; border-radius: 4px; margin: 6px 6px 6px 0; }
+        .btn:hover { background: #2c3e50; }
+        .card { background: #fff; padding: 20px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.1); margin-bottom: 16px; }
+        footer { text-align: center; padding: 20px; color: #888; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>SecureStaff</h1>
+        <p>Connecting security workers with companies — managed by you.</p>
+    </header>
+    <div class="container">
+        <div class="card">
+            <h2>Welcome</h2>
+            <p>You are the middleman appointing security jobs to workers at companies.</p>
+            <a class="btn" href="{{ url_for('auth.login') }}">Login</a>
+            <a class="btn" href="{{ url_for('auth.register', role='worker') }}">Register as Worker</a>
+            <a class="btn" href="{{ url_for('auth.register', role='company') }}">Register as Company</a>
+        </div>
+        <div class="card">
+            <h3>How it works</h3>
+            <ol>
+                <li>Companies post security job openings.</li>
+                <li>You (admin) assign suitable workers to those jobs.</li>
+                <li>Workers accept or decline assignments.</li>
+            </ol>
+        </div>
+    </div>
+    <footer>SecureStaff &copy; 2026</footer>
+</body>
+</html>
