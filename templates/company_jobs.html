@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>All Jobs - SecureStaff</title>
+    <title>Jobs - SecureStaff</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; background: #f4f6f8; }
-        header { background: #1f2d3d; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
+        header { background: #1a1a2e; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
         nav a { color: #fff; text-decoration: none; margin-left: 20px; font-size: 14px; }
         nav a:hover { text-decoration: underline; }
         .container { max-width: 1000px; margin: 24px auto; padding: 0 20px; }
@@ -13,34 +13,37 @@
         table { width: 100%; border-collapse: collapse; }
         th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; }
         .badge { padding: 2px 8px; border-radius: 3px; font-size: 12px; color: #fff; }
-        .badge-open { background: #27ae60; }
+        .badge-pending { background: #8e44ad; }
         .badge-assigned { background: #f39c12; }
+        .badge-completed { background: #27ae60; }
     </style>
 </head>
 <body>
     <header>
         <h2>All Jobs</h2>
         <nav>
-            <a href="{{ url_for('main.owner_dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('main.owner_users') }}">Users</a>
-            <a href="{{ url_for('main.owner_jobs') }}">Jobs</a>
+            <a href="{{ url_for('main.company_dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('main.company_notifications') }}">Notifications</a>
+            <a href="{{ url_for('main.company_clients') }}">Clients</a>
+            <a href="{{ url_for('main.company_workers') }}">Workers</a>
+            <a href="{{ url_for('main.company_jobs') }}">Jobs</a>
             <a href="{{ url_for('auth.logout') }}">Logout</a>
         </nav>
     </header>
     <div class="container">
         <div class="card">
-            <h3>Job Listings ({{ jobs|length }})</h3>
+            <h3>Job Requests ({{ jobs|length }})</h3>
             <table>
-                <tr><th>ID</th><th>Title</th><th>Location</th><th>Company</th><th>Status</th></tr>
+                <tr><th>ID</th><th>Title</th><th>Location</th><th>Client</th><th>Status</th></tr>
                 {% for job in jobs %}
                 <tr>
                     <td>{{ job.id }}</td>
                     <td>{{ job.title }}</td>
                     <td>{{ job.location }}</td>
-                    <td>{{ job.company.name }}</td>
+                    <td>{{ job.client.name }}</td>
                     <td><span class="badge badge-{{ job.status }}">{{ job.status }}</span></td>
                 </tr>
-                {% else %}<tr><td colspan="5">No jobs posted yet.</td></tr>{% endfor %}
+                {% else %}<tr><td colspan="5">No jobs yet.</td></tr>{% endfor %}
             </table>
         </div>
     </div>
