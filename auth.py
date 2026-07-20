@@ -76,13 +76,13 @@ def client_register():
 
         notif = Notification(
             title='New Client Registered',
-            message=f'{name} ({email}) has registered. Phone: {phone}. Address: {address}'
+            message=f'Contact: {email} | Phone: {phone}'
         )
         db.session.add(notif)
         db.session.commit()
 
         send_email(COMPANY_EMAIL, 'New Client Registration',
-                   f'New client registered:\n\nName: {name}\nEmail: {email}\nPhone: {phone}\nAddress: {address}')
+                   f'New client registered:\n\nEmail: {email}\nPhone: {phone}')
 
         flash('Registration successful. Please login.')
         return redirect(url_for('auth.client_login'))

@@ -2,56 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>SecureStaff - Security Staffing Platform</title>
+    <title>SecureStaff</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; background: #f4f6f8; color: #222; }
-        header { background: #1a1a2e; color: #fff; padding: 16px 24px; text-align: center; }
-        .container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
-        .card { background: #fff; padding: 20px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.1); margin-bottom: 16px; text-align: center; }
-        footer { text-align: center; padding: 20px; color: #888; }
-        .portal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .portal { padding: 30px 20px; border-radius: 8px; text-align: center; }
-        .portal h2 { margin-top: 0; }
-        .portal a { display: inline-block; margin-top: 12px; padding: 10px 24px; color: #fff; text-decoration: none; border-radius: 4px; font-size: 16px; }
-        .company { background: #1a1a2e; }
-        .company a { background: #e94560; }
-        .company a:hover { background: #c0392b; }
-        .client { background: #16213e; }
-        .client a { background: #0f3460; }
-        .client a:hover { background: #1a5276; }
+        body { font-family: Arial, sans-serif; margin: 0; background: #0d1117; color: #fff; }
+        .center { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .box { text-align: center; }
+        h1 { font-size: 52px; margin-bottom: 10px; }
+        p { font-size: 18px; color: #888; margin-bottom: 40px; }
+        .btn { display: inline-block; padding: 16px 40px; margin: 12px; border-radius: 8px; text-decoration: none; font-size: 20px; font-weight: bold; }
+        .company { background: #e94560; color: #fff; }
+        .company:hover { background: #c0392b; }
+        .client { background: #0f3460; color: #fff; }
+        .client:hover { background: #1a5276; }
     </style>
 </head>
 <body>
-    <header>
-        <h1>SecureStaff</h1>
-        <p>Security Staffing Platform</p>
-    </header>
-    <div class="container">
-        <div class="card">
-            <h2>Welcome</h2>
-            <p>Choose your portal to continue</p>
-        </div>
-        <div class="portal-grid">
-            <div class="portal company">
-                <h2>Company Portal</h2>
-                <p>Manage workers, assign jobs, view notifications</p>
-                <a href="{{ url_for('auth.company_login') }}">Company Login</a>
-            </div>
-            <div class="portal client">
-                <h2>Client Portal</h2>
-                <p>Register, post security job requests</p>
-                <a href="{{ url_for('auth.client_login') }}">Client Login</a>
-            </div>
-        </div>
-        <div class="card" style="margin-top:20px">
-            <h3>How it works</h3>
-            <ol>
-                <li>Clients register and post security job requests.</li>
-                <li>Company receives notifications and views client details.</li>
-                <li>Company assigns workers to client jobs.</li>
-            </ol>
+    <div class="center">
+        <div class="box">
+            <h1>SecureStaff</h1>
+            <p>Security Staffing Platform</p>
+            <a class="btn company" href="{{ url_for('main.company_home') }}">Company Portal</a>
+            <a class="btn client" href="{{ url_for('main.client_home') }}">Client Portal</a>
         </div>
     </div>
-    <footer>SecureStaff &copy; 2026</footer>
 </body>
 </html>

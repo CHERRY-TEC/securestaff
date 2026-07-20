@@ -11,6 +11,16 @@ def index():
     return render_template('index.html')
 
 
+@main.route('/company-home')
+def company_home():
+    return render_template('company_home.html')
+
+
+@main.route('/client-home')
+def client_home():
+    return render_template('client_home.html')
+
+
 # ── Company Routes ──
 
 @main.route('/company')
