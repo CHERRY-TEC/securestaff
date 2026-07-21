@@ -4,29 +4,53 @@
     <meta charset="utf-8">
     <title>Client Register - SecureStaff</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #16213e; margin: 0; }
-        .box { max-width: 420px; margin: 60px auto; background: #fff; padding: 24px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.1); }
-        input, textarea { width: 100%; padding: 8px; margin: 8px 0; box-sizing: border-box; }
-        .btn { background: #0f3460; color: #fff; border: none; padding: 10px; width: 100%; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        .msg { color: #c0392b; }
-        a { color: #0f3460; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #16213e, #1a1a2e); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .box { max-width: 400px; width: 90%; background: #fff; padding: 36px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .box .icon { text-align: center; margin-bottom: 16px; }
+        .box .icon span { display: inline-block; width: 60px; height: 60px; background: linear-gradient(135deg, #0f3460, #16213e); border-radius: 50%; line-height: 60px; font-size: 28px; color: #fff; }
+        .box h2 { text-align: center; color: #16213e; margin-bottom: 6px; }
+        .box .sub { text-align: center; color: #888; font-size: 14px; margin-bottom: 24px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.3s; font-family: inherit; }
+        .form-group input:focus, .form-group textarea:focus { border-color: #0f3460; }
+        .btn { width: 100%; padding: 13px; background: #0f3460; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.3s; }
+        .btn:hover { background: #1a5276; }
+        .links { text-align: center; margin-top: 20px; }
+        .links a { color: #0f3460; text-decoration: none; font-size: 14px; }
+        .links a:hover { text-decoration: underline; }
+        .msg { background: #ffe6e6; color: #c0392b; padding: 10px; border-radius: 6px; margin-bottom: 14px; font-size: 14px; text-align: center; }
     </style>
 </head>
 <body>
     <div class="box">
-        <h2>Register as Client</h2>
+        <div class="icon"><span>&#128100;</span></div>
+        <h2>Client Register</h2>
+        <p class="sub">Create your account</p>
         {% with messages = get_flashed_messages() %}
-            {% if messages %}<p class="msg">{{ messages[0] }}</p>{% endif %}
+            {% if messages %}<div class="msg">{{ messages[0] }}</div>{% endif %}
         {% endwith %}
         <form method="post">
-            <input name="name" placeholder="Full Name" required>
-            <input name="email" type="email" placeholder="Email" required>
-            <input name="password" type="password" placeholder="Password" required>
-            <input name="phone" placeholder="Phone">
-            <textarea name="address" placeholder="Address" rows="2"></textarea>
+            <div class="form-group">
+                <input name="name" placeholder="Full Name" required>
+            </div>
+            <div class="form-group">
+                <input name="email" type="email" placeholder="Email" required>
+            </div>
+            <div class="form-group">
+                <input name="password" type="password" placeholder="Password" required>
+            </div>
+            <div class="form-group">
+                <input name="phone" placeholder="Phone">
+            </div>
+            <div class="form-group">
+                <textarea name="address" placeholder="Address" rows="2"></textarea>
+            </div>
             <button class="btn" type="submit">Register</button>
         </form>
-        <p><a href="/login">Already have an account? Login</a></p>
+        <div class="links">
+            <a href="/login">Already have an account? Login</a>
+        </div>
     </div>
 </body>
 </html>
