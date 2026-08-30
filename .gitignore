@@ -1,5 +1,8 @@
-__pycache__/
-*.pyc
-app.db
+node_modules/
+uploads/*
+!uploads/.gitkeep
+data/db.json
 .env
-*.db
+.DS_Store
+Thumbs.db
+*.log

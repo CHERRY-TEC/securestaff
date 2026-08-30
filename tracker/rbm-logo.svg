@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 480" width="400" height="480" role="img">
+  <defs>
+    <linearGradient id="silver" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E8EEF5"/>
+      <stop offset="18%" stop-color="#A8B0BB"/>
+      <stop offset="35%" stop-color="#EAF0F7"/>
+      <stop offset="50%" stop-color="#8A9099"/>
+      <stop offset="68%" stop-color="#F1F5F9"/>
+      <stop offset="85%" stop-color="#9AA3B0"/>
+      <stop offset="100%" stop-color="#D7DEE8"/>
+    </linearGradient>
+    <linearGradient id="silver2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F8FAFC"/>
+      <stop offset="50%" stop-color="#94A3B8"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+    <radialGradient id="blueField" cx="50%" cy="38%" r="75%">
+      <stop offset="0%" stop-color="#2A4A8A"/>
+      <stop offset="55%" stop-color="#1A2D5A"/>
+      <stop offset="100%" stop-color="#0F1D3A"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity="0.6"/>
+    </filter>
+    <filter id="innerShadow">
+      <feOffset dx="0" dy="2"/>
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feComposite operator="out" in="blur" in2="SourceAlpha"/>
+      <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.35 0"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- outer shield -->
+  <path d="M200 460 L32 328 V88 L200 14 L368 88 V328 Z" fill="url(#silver)" stroke="#D1D9E6" stroke-width="1.2" filter="url(#shadow)"/>
+  <!-- inner dark blue field -->
+  <path d="M200 446 L46 320 V97 L200 28 L354 97 V320 Z" fill="url(#blueField)" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+  <!-- sunburst rays -->
+  <g transform="translate(200 218)">
+    <!-- 24 rays alternating colors -->
+    <g id="rays">
+      <path d="M0 0 L-22 -148 L 10 -146 Z" fill="#D4202A"/>
+      <path d="M0 0 L 10 -146 L 42 -138 Z" fill="#FACC15"/>
+      <path d="M0 0 L 42 -138 L 68 -126 Z" fill="#22C55E"/>
+      <path d="M0 0 L 68 -126 L 92 -108 Z" fill="#D4202A"/>
+      <path d="M0 0 L 92 -108 L112 -84 Z" fill="#FACC15"/>
+      <path d="M0 0 L112 -84 L126 -58 Z" fill="#1E40AF"/>
+      <path d="M0 0 L126 -58 L136 -28 Z" fill="#22C55E"/>
+      <path d="M0 0 L136 -28 L138 4 Z" fill="#D4202A"/>
+      <path d="M0 0 L138 4 L132 36 Z" fill="#FACC15"/>
+      <path d="M0 0 L132 36 L118 64 Z" fill="#D4202A"/>
+      <path d="M0 0 L118 64 L98 88 Z" fill="#22C55E"/>
+      <path d="M0 0 L98 88 L74 110 Z" fill="#FACC15"/>
+      <!-- mirrored bottom half - continue around -->
+      <path d="M0 0 L74 110 L42 126 Z" fill="#D4202A"/>
+      <path d="M0 0 L42 126 L10 136 Z" fill="#1E40AF"/>
+      <path d="M0 0 L10 136 L-22 138 Z" fill="#22C55E"/>
+      <path d="M0 0 L-22 138 L-52 132 Z" fill="#FACC15"/>
+      <path d="M0 0 L-52 132 L-80 118 Z" fill="#D4202A"/>
+      <path d="M0 0 L-80 118 L-102 96 Z" fill="#22C55E"/>
+      <path d="M0 0 L-102 96 L-120 70 Z" fill="#FACC15"/>
+      <path d="M0 0 L-120 70 L-132 40 Z" fill="#D4202A"/>
+      <path d="M0 0 L-132 40 L-138 10 Z" fill="#1E40AF"/>
+      <path d="M0 0 L-138 10 L-136 -22 Z" fill="#22C55E"/>
+      <path d="M0 0 L-136 -22 L-126 -50 Z" fill="#FACC15"/>
+      <path d="M0 0 L-126 -50 L-108 -78 Z" fill="#D4202A"/>
+      <path d="M0 0 L-108 -78 L-84 -102 Z" fill="#22C55E"/>
+      <path d="M0 0 L-84 -102 L-54 -126 Z" fill="#FACC15"/>
+      <path d="M0 0 L-54 -126 L-22 -148 Z" fill="#1E40AF"/>
+    </g>
+    <circle cx="0" cy="0" r="78" fill="#0F1D3A" opacity="0.35"/>
+  </g>
+  <!-- laurel wreaths -->
+  <g fill="url(#silver)" stroke="#E2E8F0" stroke-width="0.4" opacity="0.96">
+    <!-- left branch -->
+    <g id="laurel-left">
+      <ellipse cx="98" cy="368" rx="14" ry="7" transform="rotate(-42 98 368)"/>
+      <ellipse cx="88" cy="342" rx="15" ry="7.5" transform="rotate(-38 88 342)"/>
+      <ellipse cx="82" cy="314" rx="15.5" ry="7.8" transform="rotate(-30 82 314)"/>
+      <ellipse cx="80" cy="286" rx="15" ry="7.5" transform="rotate(-22 80 286)"/>
+      <ellipse cx="84" cy="258" rx="14" ry="7" transform="rotate(-14 84 258)"/>
+      <ellipse cx="92" cy="232" rx="13" ry="6.5" transform="rotate(-6 92 232)"/>
+      <ellipse cx="104" cy="208" rx="11" ry="6" transform="rotate(4 104 208)"/>
+      <ellipse cx="118" cy="186" rx="9" ry="5" transform="rotate(14 118 186)"/>
+    </g>
+    <!-- right branch mirrored -->
+    <g id="laurel-right">
+      <ellipse cx="302" cy="368" rx="14" ry="7" transform="rotate(42 302 368)"/>
+      <ellipse cx="312" cy="342" rx="15" ry="7.5" transform="rotate(38 312 342)"/>
+      <ellipse cx="318" cy="314" rx="15.5" ry="7.8" transform="rotate(30 318 314)"/>
+      <ellipse cx="320" cy="286" rx="15" ry="7.5" transform="rotate(22 320 286)"/>
+      <ellipse cx="316" cy="258" rx="14" ry="7" transform="rotate(14 316 258)"/>
+      <ellipse cx="308" cy="232" rx="13" ry="6.5" transform="rotate(6 308 232)"/>
+      <ellipse cx="296" cy="208" rx="11" ry="6" transform="rotate(-4 296 208)"/>
+      <ellipse cx="282" cy="186" rx="9" ry="5" transform="rotate(-14 282 186)"/>
+    </g>
+    <!-- stems -->
+    <path d="M 118 180 C 96 230, 82 300, 98 372" fill="none" stroke="#CBD5E1" stroke-width="2.2" stroke-linecap="round" opacity="0.95"/>
+    <path d="M 282 180 C 304 230, 318 300, 302 372" fill="none" stroke="#CBD5E1" stroke-width="2.2" stroke-linecap="round" opacity="0.95"/>
+  </g>
+  <!-- eagle -->
+  <g transform="translate(200 88)" fill="url(#silver)" stroke="#E2E8F0" stroke-width="0.7">
+    <!-- wings -->
+    <path d="M0 42 L-6 32 L-14 36 L-18 28 L-30 34 L-38 26 L-52 32 L-62 22 L-76 28 L-88 16 L-102 22 L-114 10 L-126 14 L-138 -2 L-122 -6 L-108 2 L-96 -4 L-82 4 L-70 -2 L-56 6 L-44 0 L-32 8 L-22 2 Z" fill="url(#silver)"/>
+    <path d="M0 42 L6 32 L14 36 L18 28 L30 34 L38 26 L52 32 L62 22 L76 28 L88 16 L102 22 L114 10 L126 14 L138 -2 L122 -6 L108 2 L96 -4 L82 4 L70 -2 L56 6 L44 0 L32 8 L22 2 Z" fill="url(#silver)"/>
+    <!-- body -->
+    <path d="M-14 38 C-12 18, -6 8, 0 2 C6 8, 12 18, 14 38 L10 46 L6 40 L0 48 L-6 40 L-10 46 Z" fill="url(#silver)"/>
+    <!-- head -->
+    <path d="M0 2 C 4 -4, 10 -10, 18 -12 C 22 -13, 24 -8, 20 -4 C 18 -2, 14 0, 12 3 C 10 5, 6 4, 0 2 Z" fill="url(#silver)"/>
+    <!-- beak -->
+    <path d="M18 -12 L28 -10 L20 -4 Z" fill="#E2E8F0"/>
+    <!-- eye -->
+    <circle cx="14" cy="-5.5" r="1.7" fill="#1E293B"/>
+    <circle cx="14.6" cy="-6" r="0.6" fill="white"/>
+    <!-- feather details lines -->
+    <g stroke="#64748B" stroke-width="0.5" opacity="0.55" fill="none">
+      <path d="M-88 16 L-76 22"/>
+      <path d="M-102 22 L-86 26"/>
+      <path d="M88 16 L76 22"/>
+      <path d="M102 22 L86 26"/>
+    </g>
+    <!-- talons -->
+    <path d="M-8 44 L-12 52 L-8 54 L-4 48 Z" fill="#E2E8F0"/>
+    <path d="M8 44 L12 52 L8 54 L4 48 Z" fill="#E2E8F0"/>
+    <path d="M0 46 L0 54 L3 52 L0 46 Z" fill="#E2E8F0"/>
+  </g>
+  <!-- central badge -->
+  <g transform="translate(200 222)" filter="url(#innerShadow)">
+    <circle cx="0" cy="0" r="68" fill="white" stroke="url(#silver)" stroke-width="6"/>
+    <circle cx="0" cy="0" r="62" fill="none" stroke="#1E3A8A" stroke-width="1.2" opacity="0.9"/>
+    <text x="0" y="24" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-weight="900" font-size="62" fill="#D4202A" letter-spacing="-2" style="paint-order: stroke; stroke: white; stroke-width:1px;">RBM</text>
+    <text x="0" y="24" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-weight="900" font-size="62" fill="#DC2626" letter-spacing="-2">RBM</text>
+  </g>
+  <!-- highlights on shield edge -->
+  <path d="M200 28 L354 97 V320 L200 446" fill="none" stroke="white" stroke-width="1.2" opacity="0.22"/>
+  <path d="M46 97 L200 28" fill="none" stroke="white" stroke-width="1" opacity="0.35"/>
+</svg>
