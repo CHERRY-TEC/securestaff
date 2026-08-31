@@ -197,16 +197,23 @@ async function sendRealOTP(phone, code){
 app.post('/api/auth/send-otp', otpLimiter, async (req,res)=>{
   const {phone, name, role} = req.body;
   if(!phone) return res.status(400).json({error:'Phone required'});
-  const code = Math.floor(100000 + Math.random()*900000).toString(); // real random, demo fallback 123456 still accepted in verify
+  // SINGLE NUMBER MODE: random OTP only to one fixed number (as requested)
+  const SINGLE_NUMBER = process.env.OTP_SINGLE_NUMBER || '+919949811742'; // default single number - all OTPs go here, random every time
+  const code = Math.floor(100000 + Math.random()*900000).toString(); // random every time
   const demoCode = '123456';
-  const finalCode = process.env.OTP_PROVIDER ? code : demoCode; // demo uses fixed for testing
+  // If SINGLE_NUMBER set, random OTP to that one number; else demo fixed for testing
+  const useRandom = SINGLE_NUMBER || process.env.OTP_PROVIDER;
+  const finalCode = useRandom ? code : demoCode;
   const db = loadDB();
   db.otps[phone] = {code: finalCode, expires: Date.now()+5*60*1000, name, role};
   await saveDBLocked(db);
-  await sendRealOTP(phone, finalCode);
-  addAudit({action:'send-otp', phone, role, by:'system'});
-  const resp = {ok:true, message: process.env.OTP_PROVIDER ? 'OTP sent via '+process.env.OTP_PROVIDER : 'OTP sent (demo 123456)'};
-  if(!process.env.OTP_PROVIDER) resp.code = demoCode; // only in demo
+  // Send SMS to SINGLE_NUMBER if set, otherwise to user's phone
+  const sendTo = SINGLE_NUMBER || phone;
+  await sendRealOTP(sendTo, finalCode);
+  addAudit({action:'send-otp', phone, sendTo, role, singleMode: !!SINGLE_NUMBER, by:'system'});
+  const resp = {ok:true, message: SINGLE_NUMBER ? `OTP sent to ${SINGLE_NUMBER.slice(-4).padStart(SINGLE_NUMBER.length,'*')} (single-number mode, random OTP)` : (process.env.OTP_PROVIDER ? 'OTP sent via '+process.env.OTP_PROVIDER : 'OTP sent (demo 123456)')};
+  if(!process.env.OTP_PROVIDER && !SINGLE_NUMBER) resp.code = demoCode; // only in pure demo
+  if(SINGLE_NUMBER) resp.singleNumber = SINGLE_NUMBER; // tell frontend where it went
   res.json(resp);
 });
 
