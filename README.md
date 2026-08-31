@@ -1,6 +1,6 @@
 # RBM Security — Telangana Manpower Platform
 
-**Two Separate Websites** — Client + Tracker — with Real Backend, Glass Morphism, Telangana-only.
+**Two Generations Merged** — Legacy Flask + New RBM Platform — Both live.
 
 Built for **RBM Security Services** — Uppal, Hyderabad, Telangana. Contact: **99498 11742 / 88975 35830 / rbm.uppal@gmail.com**
 
@@ -8,15 +8,25 @@ Built for **RBM Security Services** — Uppal, Hyderabad, Telangana. Contact: **
 
 | Website | Folder | URL | Access | Purpose |
 |---------|--------|-----|--------|---------|
-| **Company Website** | `/client` | `http://localhost:3001/` | **PUBLIC** - everyone | For job seekers & employers: view Telangana jobs, apply, post jobs, bulk manpower, saved jobs. No login needed to browse. |
-| **Tracker Dashboard** | `/tracker` | `http://localhost:3001/tracker` | **COMPANY ONLY** - private | For **RBM staff only**: manage ALL applications, charts, kanban, calendar, payroll, SOS. Requires company login. |
-| **Backend API** | `/backend` | `http://localhost:3001/api` | Mixed | Public: `GET /api/jobs`, `POST /api/applications` (apply). Company-only: `GET /api/applications`, `GET /api/stats`, `POST /api/jobs` |
+| **Company Website (New)** | `/client` | `http://localhost:3001/` | **PUBLIC** - everyone | For job seekers & employers: view Telangana jobs, apply, post jobs, bulk manpower, saved jobs. No login needed to browse. |
+| **Tracker Dashboard (New)** | `/tracker` | `http://localhost:3001/tracker` | **COMPANY ONLY** - private | For **RBM staff only**: manage ALL applications, charts, kanban, calendar, payroll, SOS. Requires company login. |
+| **Backend API (New)** | `/backend` | `http://localhost:3001/api` | Mixed | Public: `GET /api/jobs`, `POST /api/applications` (apply). Company-only: `GET /api/applications`, `GET /api/stats`, `POST /api/jobs` |
 
 **Separation enforced:**
 - **Backend:** `GET /api/applications`, `GET /api/stats`, `POST/DELETE /api/jobs` require `requireCompanyAuth` (JWT role Company/Admin). Public cannot read applications.
 - **Frontend:** Tracker (`/tracker`) and `client/applications.html` show `Company Access Only` gate if not company. `Company phones: 9949811742 / 8897535830, OTP 123456 or password rbm@2026`. Demo fallback works offline.
 - **Client nav:** Tracker link is `🔒 Tracker` for public (click → confirms company private) and shows `COMPANY` badge only for logged-in company. Job seekers' own `My Applications` section remains public.
 - All share `localStorage` + Real API when served via `http://localhost:3001` (same origin). Tracker uses `rbm_company_token` separate from job seeker `rbm_token`.
+
+### Legacy Flask Platform (Other Session, Restored)
+
+| Website | Folder | Port | Purpose |
+|---------|--------|------|---------|
+| **Client App (Legacy)** | `/client_app` | `5001` | Flask — Register and post security job requests, track job status, guard profiles |
+| **Company App (Legacy)** | `/company_app` | `5000` | Flask — Manage workers, view client notifications, assign workers, add workers |
+| **Root Flask** | `app.py` `auth.py` `models.py` | `5000/5001` | Original SecureStaff middleman — `run_both.py` runs both |
+
+Both generations share same repo. New platform is at `/client`+`/tracker`+`/backend` (Node, glass, Telangana). Legacy at `/client_app`+`/company_app` (Flask, neomorphism). Choose per need.
 
 ### Quick Start — Two Separate Websites
 
