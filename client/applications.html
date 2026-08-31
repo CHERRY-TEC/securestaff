@@ -61,9 +61,39 @@ body{
 .table-glass tbody tr:hover{background:rgba(255,255,255,0.05);backdrop-filter:blur(8px);transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,0,0,0.2)}
 .stat-card{transition:all 0.3s}
 .stat-card:hover{transform:translateY(-4px);border-color:rgba(255,184,0,0.2);box-shadow:0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,184,0,0.08)}
+#companyLoginGate{backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%)}
 </style>
 </head>
 <body class="font-outfit antialiased">
+<!-- COMPANY LOGIN GATE - Applications dashboard is company-only, separate website -->
+<div id="companyLoginGate" class="fixed inset-0 z-[100] bg-[#070A14]/95 flex items-center justify-center p-4">
+  <div class="glass-strong rounded-[24px] max-w-[420px] w-full p-6 md:p-8 relative overflow-hidden">
+    <div class="absolute -top-10 -right-10 w-32 h-32 bg-amber/10 blur-[30px] rounded-full"></div>
+    <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-cyan/10 blur-[30px] rounded-full"></div>
+    <div class="relative">
+      <div class="text-center">
+        <div class="w-14 h-14 rounded-2xl bg-amber flex items-center justify-center mx-auto text-ink"><i class="fa-solid fa-building-shield text-xl"></i></div>
+        <h2 class="font-space font-bold text-[22px] mt-4">Company Access Only</h2>
+        <p class="text-sm text-white/60 mt-1">Applications dashboard is private — for RBM company staff only.<br>Public site is <a href="./index.html" class="text-amber underline">Company Website</a></p>
+        <div class="inline-flex items-center gap-2 mt-3 bg-amber/10 border border-amber/20 rounded-full px-3 py-1 text-xs"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Separate website: Company (public) • Tracker (private)</div>
+      </div>
+      <form onsubmit="handleCompanyLogin(event)" class="mt-6 space-y-3">
+        <div>
+          <label class="text-xs font-bold tracking-widest text-white/60">COMPANY PHONE</label>
+          <input id="companyPhone" required type="tel" placeholder="+91 99498 11742" value="+919949811742" class="w-full mt-1.5 glass rounded-xl px-4 py-3 text-sm">
+        </div>
+        <div>
+          <label class="text-xs font-bold tracking-widest text-white/60">OTP or PASSWORD</label>
+          <input id="companyCode" required type="text" placeholder="OTP 123456 or rbm@2026" value="123456" class="w-full mt-1.5 glass rounded-xl px-4 py-3 text-sm">
+          <div class="text-[11px] text-white/40 mt-1">Demo OTP: <span class="text-amber font-bold">123456</span> • Password: <span class="text-amber">rbm@2026</span></div>
+        </div>
+        <div id="companyLoginError" class="hidden glass rounded-xl px-3 py-2 text-xs text-red-400 border-red-500/20 bg-red-500/10"></div>
+        <button type="submit" id="companyLoginBtn" class="w-full btn-primary rounded-full py-3.5 font-bold"><i class="fa-solid fa-lock mr-2"></i>Unlock Applications</button>
+        <div class="text-center text-xs text-white/30 mt-3">Public? Go to <a href="./index.html" class="text-amber underline">Company Website</a></div>
+      </form>
+    </div>
+  </div>
+</div>
 <div class="orb orb-a"></div>
 <div class="orb orb-b"></div>
 <div class="orb orb-c"></div>
@@ -79,9 +109,11 @@ body{
       <span class="hidden md:inline-flex ml-2 bg-amber text-ink text-xs font-bold px-3 py-1 rounded-full" id="totalBadge">0 Applications</span>
     </div>
     <div class="flex items-center gap-2">
-      <a href="./index.html" class="btn-ghost rounded-full px-4 py-2 text-sm font-semibold hidden md:inline-flex"><i class="fa-solid fa-arrow-left mr-2"></i>Back to Website</a>
+      <span id="companyBadge" class="hidden md:inline-flex glass rounded-full px-3 py-1.5 text-xs font-bold items-center gap-1.5"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> <span id="companyBadgeText">Company</span></span>
+      <a href="./index.html" class="btn-ghost rounded-full px-4 py-2 text-sm font-semibold hidden md:inline-flex"><i class="fa-solid fa-arrow-left mr-2"></i>Company Site</a>
       <a href="./index.html" class="w-9 h-9 rounded-full glass flex items-center justify-center md:hidden"><i class="fa-solid fa-house text-sm"></i></a>
       <button onclick="exportCSV()" class="btn-primary rounded-full px-4 py-2 text-sm hidden md:inline-flex"><i class="fa-solid fa-download mr-2"></i>Export CSV</button>
+      <button onclick="companyLogout()" class="btn-ghost rounded-full px-3 py-2 text-sm hidden md:inline-flex" title="Logout"><i class="fa-solid fa-right-from-bracket mr-1"></i>Logout</button>
       <button onclick="clearAll()" class="w-9 h-9 rounded-full bg-red-500/20 border border-red-500/30 text-red-400 flex items-center justify-center hover:bg-red-500 hover:text-white transition" title="Clear All"><i class="fa-solid fa-trash text-xs"></i></button>
     </div>
   </div>
@@ -191,6 +223,76 @@ body{
 </div>
 
 <script>
+// === COMPANY GATE - Applications is company private ===
+const COMPANY_TOKEN_KEY = 'rbm_company_token';
+const COMPANY_USER_KEY = 'rbm_company_user';
+function getCompanyToken(){ return localStorage.getItem(COMPANY_TOKEN_KEY) || localStorage.getItem('rbm_token') || ''; }
+function getCompanyUser(){ try{ return JSON.parse(localStorage.getItem(COMPANY_USER_KEY) || localStorage.getItem('rbm_user') || 'null'); }catch(e){ return null; } }
+function isCompanyUser(u){ if(!u) return false; const r=(u.role||'').toLowerCase(); return r.includes('company')||r.includes('admin')||r.includes('employer')||r.includes('owner')||!!u.isCompany; }
+function showCompanyGate(show){ const g=document.getElementById('companyLoginGate'); if(g) g.classList.toggle('hidden', !show); }
+async function checkCompanyAuth(){
+  const token=getCompanyToken(); const user=getCompanyUser();
+  if(token && user && isCompanyUser(user)){
+    try{
+      const API_BASE = window.location.hostname==='localhost' && window.location.port==='3001' ? '' : (window.location.port==='8767' ? 'http://localhost:3001' : '');
+      const res=await fetch((API_BASE||'')+'/api/auth/company-me', {headers:{'Authorization':'Bearer '+token}});
+      if(res.ok){ showCompanyGate(false); const b=document.getElementById('companyBadge'); const bt=document.getElementById('companyBadgeText'); if(b) b.classList.remove('hidden'); if(bt) bt.textContent=user.name||'Company'; return true; }
+    }catch(e){}
+    showCompanyGate(false); return true;
+  }
+  showCompanyGate(true); return false;
+}
+async function handleCompanyLogin(e){
+  e.preventDefault();
+  const phone=document.getElementById('companyPhone').value.trim();
+  const code=document.getElementById('companyCode').value.trim();
+  const err=document.getElementById('companyLoginError'); const btn=document.getElementById('companyLoginBtn');
+  if(err) err.classList.add('hidden');
+  if(btn){ btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Verifying...'; }
+  try{
+    const API_BASE = window.location.hostname==='localhost' && window.location.port==='3001' ? '' : (window.location.port==='8767' ? 'http://localhost:3001' : '');
+    let res;
+    const isPassword = isNaN(code) || code.includes('@');
+    if(isPassword){
+      res=await fetch((API_BASE||'')+'/api/auth/company-login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({phone, password: code})});
+    } else {
+      res=await fetch((API_BASE||'')+'/api/auth/company-login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({phone, code})});
+    }
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.error||'Login failed');
+    localStorage.setItem(COMPANY_TOKEN_KEY, data.token);
+    localStorage.setItem(COMPANY_USER_KEY, JSON.stringify(data.user));
+    localStorage.setItem('rbm_token', data.token);
+    localStorage.setItem('rbm_user', JSON.stringify(data.user));
+    await checkCompanyAuth();
+    render();
+  }catch(ex){
+    const allowed=['9949811742','8897535830','+919949811742','+918897535830'];
+    const norm=phone.replace(/\s/g,'');
+    const okPhone=allowed.some(p=> norm.endsWith(p.slice(-10)));
+    const okCode=(code==='123456' || code==='rbm@2026');
+    if(okPhone && okCode){
+      const demoUser={id:'company-demo', phone: norm, name:'RBM Security Company', role:'Company', isCompany:true};
+      const demoToken='demo-company-token-'+Date.now();
+      localStorage.setItem(COMPANY_TOKEN_KEY, demoToken);
+      localStorage.setItem(COMPANY_USER_KEY, JSON.stringify(demoUser));
+      localStorage.setItem('rbm_token', demoToken);
+      localStorage.setItem('rbm_user', JSON.stringify(demoUser));
+      await checkCompanyAuth();
+      render();
+    } else {
+      if(err){ err.textContent=ex.message||'Invalid company credentials'; err.classList.remove('hidden'); }
+    }
+  } finally {
+    if(btn){ btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-lock mr-2"></i>Unlock Applications'; }
+  }
+}
+function companyLogout(){
+  localStorage.removeItem(COMPANY_TOKEN_KEY); localStorage.removeItem(COMPANY_USER_KEY);
+  showCompanyGate(true);
+}
+document.addEventListener('DOMContentLoaded', ()=>{ checkCompanyAuth(); });
+
 const KEY = 'rbm_applications';
 function getApps(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch(e){ return []; } }
 function saveApps(a){ localStorage.setItem(KEY, JSON.stringify(a)); }

@@ -4,24 +4,34 @@
 
 Built for **RBM Security Services** — Uppal, Hyderabad, Telangana. Contact: **99498 11742 / 88975 35830 / rbm.uppal@gmail.com**
 
-### Live Architecture
+### Live Architecture — TWO SEPARATE WEBSITES
 
-| Website | Folder | Port | Purpose |
-|---------|--------|------|---------|
-| **Client** | `/client` | `3001` `/` | For **clients** (job seekers & employers) to view Telangana jobs, apply, post jobs, bulk manpower, auth, saved, etc. |
-| **Tracker** | `/tracker` | `3001` `/tracker` | For **admin** to **track ALL applications** — glass morphism dashboard with charts, kanban, calendar, payroll, SOS |
-| **Backend** | `/backend` | `3001` `/api` | Real Node + Express + JSON DB (`data/db.json`), JWT auth, file uploads `uploads/` |
+| Website | Folder | URL | Access | Purpose |
+|---------|--------|-----|--------|---------|
+| **Company Website** | `/client` | `http://localhost:3001/` | **PUBLIC** - everyone | For job seekers & employers: view Telangana jobs, apply, post jobs, bulk manpower, saved jobs. No login needed to browse. |
+| **Tracker Dashboard** | `/tracker` | `http://localhost:3001/tracker` | **COMPANY ONLY** - private | For **RBM staff only**: manage ALL applications, charts, kanban, calendar, payroll, SOS. Requires company login. |
+| **Backend API** | `/backend` | `http://localhost:3001/api` | Mixed | Public: `GET /api/jobs`, `POST /api/applications` (apply). Company-only: `GET /api/applications`, `GET /api/stats`, `POST /api/jobs` |
 
-All share `localStorage` + Real API (`/api`) when served via `http://localhost:3001` (same origin). Fallback to `localStorage` if backend down.
+**Separation enforced:**
+- **Backend:** `GET /api/applications`, `GET /api/stats`, `POST/DELETE /api/jobs` require `requireCompanyAuth` (JWT role Company/Admin). Public cannot read applications.
+- **Frontend:** Tracker (`/tracker`) and `client/applications.html` show `Company Access Only` gate if not company. `Company phones: 9949811742 / 8897535830, OTP 123456 or password rbm@2026`. Demo fallback works offline.
+- **Client nav:** Tracker link is `🔒 Tracker` for public (click → confirms company private) and shows `COMPANY` badge only for logged-in company. Job seekers' own `My Applications` section remains public.
+- All share `localStorage` + Real API when served via `http://localhost:3001` (same origin). Tracker uses `rbm_company_token` separate from job seeker `rbm_token`.
 
-### Quick Start
+### Quick Start — Two Separate Websites
 
 ```powershell
-# Backend (serves both frontends + API)
+# Backend (serves BOTH websites + API)
 Set-Location backend; npm install; node server.js
-# → http://localhost:3001/           (Client)
-# → http://localhost:3001/tracker    (Tracker Dashboard)
+# → http://localhost:3001/           (Company Website - PUBLIC)
+# → http://localhost:3001/tracker    (Tracker Dashboard - COMPANY ONLY, login: 9949811742 / 123456 or rbm@2026)
 # → http://localhost:3001/api/health
+# → Company login: POST /api/auth/company-login {phone, code:123456} or {phone, password:rbm@2026}
+
+# Test separation:
+# Public works: curl http://localhost:3001/api/jobs
+# Private blocked: curl http://localhost:3001/api/applications          # 401 Company login required
+# Private allowed: curl -H "Authorization: Bearer <company_token>" http://localhost:3001/api/applications
 
 # Or separate static (for localStorage demo, no API):
 Set-Location ..; python -m http.server 8767

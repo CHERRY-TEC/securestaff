@@ -157,6 +157,10 @@ body{background:#070A14;color:white;overflow-x:hidden}
 @keyframes particleFloat{0%{transform:translateY(100vh) translateX(0) scale(0); opacity:0}10%{opacity:0.6}90%{opacity:0.4}100%{transform:translateY(-10vh) translateX(40px) scale(1); opacity:0}}
 .kenburns{animation:kenburns 18s ease-in-out infinite alternate}
 @keyframes kenburns{0%{transform:scale(1) translate(0,0)}100%{transform:scale(1.08) translate(-1.5%, -1%)}}
+/* Company-only tracker link - hidden for public, visible for company */
+.company-only{display:none !important}
+.company-only.visible{display:flex !important}
+.company-lock{opacity:0.6}
 </style>
 </head>
 <body class="font-outfit antialiased selection:bg-amber selection:text-ink">
@@ -210,7 +214,7 @@ body{background:#070A14;color:white;overflow-x:hidden}
         <a href="#categories" class="hover:text-white transition">Categories</a>
         <a href="#how" class="hover:text-white transition">How it works</a>
         <a href="#employers" class="hover:text-white transition">For Employers</a>
-        <a href="./applications.html" target="_blank" class="hover:text-white transition flex items-center gap-1.5">Applications <span id="navAppCount" class="bg-amber text-ink text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span></a>
+        <a href="javascript:void(0)" onclick="handleTrackerAccess()" class="hover:text-white transition flex items-center gap-1.5" title="Tracker is company-only, separate website"><i class="fa-solid fa-lock text-[10px] text-amber"></i> Tracker <span id="navAppCount" class="company-only bg-amber text-ink text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span> <span class="company-only text-[10px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-full">COMPANY</span></a>
       </div>
       <div class="flex items-center gap-2 md:gap-3">
         <button id="themeToggle" onclick="toggleTheme()" class="hidden md:flex w-9 h-9 rounded-full glass items-center justify-center" title="Toggle theme"><i class="fa-solid fa-moon text-xs"></i></button>
@@ -240,7 +244,7 @@ body{background:#070A14;color:white;overflow-x:hidden}
       <a href="#categories" class="text-white/80">Categories</a>
       <a href="#how" class="text-white/80">How it works</a>
       <a href="#employers" class="text-white/80">For Employers</a>
-      <a href="./applications.html" target="_blank" class="text-white/80 flex items-center justify-between">Applications <span id="navAppCountMobile" class="bg-amber text-ink text-xs font-bold px-2 py-0.5 rounded-full">0</span></a>
+      <a href="javascript:void(0)" onclick="handleTrackerAccess()" class="text-white/80 flex items-center justify-between"><span class="flex items-center gap-1.5"><i class="fa-solid fa-lock text-amber text-xs"></i> Tracker <span class="text-[10px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-full">COMPANY ONLY</span></span> <span id="navAppCountMobile" class="company-only bg-amber text-ink text-xs font-bold px-2 py-0.5 rounded-full">0</span></a>
       <a href="javascript:void(0)" onclick="openAuth()" class="btn-ghost rounded-full px-5 py-3 text-center font-semibold">Sign In / Register</a>
       <div class="flex gap-2">
         <button onclick="switchLang('en')" class="flex-1 btn-ghost rounded-full py-2 text-xs">EN</button>
@@ -3231,8 +3235,44 @@ document.addEventListener('keydown', (e)=>{
     <span id="notifCount" class="bg-amber text-ink text-xs font-bold px-2 py-0.5 rounded-full">0 new</span>
   </div>
   <div id="notifList" class="mt-3 space-y-2 max-h-[320px] overflow-auto"></div>
-  <a href="./applications.html" target="_blank" class="block text-center text-xs text-amber mt-3 hover:underline">View all in tracker →</a>
+  <a href="javascript:void(0)" onclick="handleTrackerAccess()" class="block text-center text-xs text-amber mt-3 hover:underline">View all in tracker → (company only)</a>
 </div>
+
+<script>
+// === TWO WEBSITES SEPARATION: Company public site vs Tracker private ===
+function isCompanyUserClient(){
+  try{
+    const u = JSON.parse(localStorage.getItem('rbm_company_user') || localStorage.getItem('rbm_user') || 'null');
+    if(!u) return false;
+    const r=(u.role||'').toLowerCase();
+    return r.includes('company')||r.includes('admin')||r.includes('employer')||r.includes('owner')||!!u.isCompany;
+  }catch(e){return false;}
+}
+function updateCompanyVisibility(){
+  const isComp = isCompanyUserClient();
+  document.querySelectorAll('.company-only').forEach(el=>{
+    if(isComp) el.classList.add('visible');
+    else el.classList.remove('visible');
+  });
+}
+function handleTrackerAccess(){
+  const trackerUrl = location.protocol==='file:' ? './applications.html' : '/tracker';
+  // Separate website handling: file:// vs http
+  if(isCompanyUserClient()){
+    window.open(trackerUrl, '_blank');
+  } else {
+    if(confirm('Tracker is company-only (separate website).\n\n• This site (Company Website): PUBLIC for everyone to view jobs & apply\n• Tracker ('+trackerUrl+'): PRIVATE for RBM company staff only to manage applications\n\nCompany login required.\nDemo: phone 9949811742, OTP 123456 or password rbm@2026\n\nGo to tracker login now?')){
+      window.open(trackerUrl, '_blank');
+    }
+  }
+}
+document.addEventListener('DOMContentLoaded', updateCompanyVisibility);
+setInterval(updateCompanyVisibility, 2000);
+const _origUpdateAuthUI2 = window.updateAuthUI;
+if(typeof _origUpdateAuthUI2 === 'function'){
+  window.updateAuthUI = function(){ _origUpdateAuthUI2(); updateCompanyVisibility(); };
+}
+</script>
 
 </body>
 </html>
