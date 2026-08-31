@@ -1,4 +1,16 @@
 services:
+  # Legacy Flask (client_app/company_app) - keep for old generation
+  - type: web
+    name: securestaff-flask
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn wsgi:app
+    branch: master
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12"
+  # New RBM Platform (client/tracker/backend) - Node
   - type: web
     name: securestaff
     env: node
@@ -6,6 +18,7 @@ services:
     rootDir: backend
     buildCommand: npm install
     startCommand: node server.js
+    branch: master
     envVars:
       - key: NODE_VERSION
         value: 20
