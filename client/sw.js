@@ -1,4 +1,4 @@
-const CACHE = 'rbm-security-v3';
+const CACHE = 'rbm-security-v2';
 const ASSETS = ['./','./index.html','./rbm-logo.png','./manifest.json'];
 self.addEventListener('install', e=>{
   e.waitUntil(caches.open(CACHE).then(c=> c.addAll(ASSETS).catch(()=>{})));
