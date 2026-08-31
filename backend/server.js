@@ -152,11 +152,28 @@ app.post('/api/auth/login', async (req,res)=>{
   res.json({ok:true, token, user});
 });
 
-// COMPANY LOGIN - tracker private access only
+// COMPANY LOGIN - tracker private access only - ID rbmbaleshgoud / bindu@goud0319
 app.post('/api/auth/company-login', async (req,res)=>{
-  const {phone, password, code} = req.body;
+  const {phone, password, code, id} = req.body;
   const db = loadDB();
-  // Allow OTP 123456 for company phones OR password rbm@2026
+  const TRACKER_ID = 'rbmbaleshgoud';
+  const TRACKER_PASS = 'bindu@goud0319';
+  // 1. ID + Password for tracker (primary - as requested)
+  const reqId = (id || phone || '').toString().trim();
+  const reqPass = (password || code || '').toString();
+  if(reqId === TRACKER_ID && reqPass === TRACKER_PASS){
+    let user = db.users.find(u=> u.id==='tracker-rbmbaleshgoud' || u.phone===TRACKER_ID);
+    if(!user){
+      user = {id: 'tracker-rbmbaleshgoud', phone: TRACKER_ID, name: 'RBM Balesh Goud (Tracker Admin)', role: 'Company', isCompany: true, createdAt: new Date().toISOString()};
+      // ensure not duplicate by phone
+      if(!db.users.find(u=> u.phone===TRACKER_ID)) db.users.push(user);
+      else user = db.users.find(u=> u.phone===TRACKER_ID);
+      saveDB(db);
+    }
+    const token = jwt.sign({id:user.id, phone:user.phone, name:user.name, role:user.role, isCompany: true}, JWT_SECRET, {expiresIn:'30d'});
+    return res.json({ok:true, token, user});
+  }
+  // 2. Legacy: Allow OTP 123456 for company phones OR password rbm@2026 (keep for fallback)
   const COMPANY_PHONES = ['+919949811742','9949811742','+918897535830','8897535830'];
   const COMPANY_PASSWORD = 'rbm@2026';
   const normalizedPhone = phone ? phone.replace(/\s/g,'') : '';
@@ -179,7 +196,7 @@ app.post('/api/auth/company-login', async (req,res)=>{
     const token = jwt.sign({id:user.id, phone:user.phone, name:user.name, role:user.role, isCompany: true}, JWT_SECRET, {expiresIn:'30d'});
     return res.json({ok:true, token, user});
   }
-  return res.status(401).json({error:'Invalid company credentials. Use company phone + OTP 123456 or password rbm@2026'});
+  return res.status(401).json({error:'Invalid tracker credentials. Use ID rbmbaleshgoud and password bindu@goud0319'});
 });
 
 // Verify company token

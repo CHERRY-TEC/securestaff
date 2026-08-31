@@ -81,14 +81,14 @@ body{
       </div>
       <form onsubmit="handleCompanyLogin(event)" class="mt-6 space-y-3">
         <div>
-          <label class="text-xs font-bold tracking-widest text-white/60">COMPANY PHONE</label>
-          <input id="companyPhone" required type="tel" placeholder="+91 99498 11742" value="+919949811742" class="w-full mt-1.5 glass rounded-xl px-4 py-3 text-sm placeholder:text-white/30 focus:outline-none focus:border-amber/50">
-          <div class="text-[11px] text-white/40 mt-1">Allowed: 9949811742 / 8897535830</div>
+          <label class="text-xs font-bold tracking-widest text-white/60">TRACKER ID</label>
+          <input id="companyPhone" required type="text" placeholder="Enter tracker ID" value="rbmbaleshgoud" class="w-full mt-1.5 glass rounded-xl px-4 py-3 text-sm placeholder:text-white/30 focus:outline-none focus:border-amber/50">
+          <div class="text-[11px] text-white/40 mt-1">Only this ID can open tracker</div>
         </div>
         <div>
-          <label class="text-xs font-bold tracking-widest text-white/60">OTP or PASSWORD</label>
-          <input id="companyCode" required type="text" placeholder="OTP 123456 or password rbm@2026" value="123456" class="w-full mt-1.5 glass rounded-xl px-4 py-3 text-sm placeholder:text-white/30 focus:outline-none focus:border-amber/50">
-          <div class="text-[11px] text-white/40 mt-1">Demo OTP: <span class="text-amber font-bold">123456</span> • Password: <span class="text-amber">rbm@2026</span></div>
+          <label class="text-xs font-bold tracking-widest text-white/60">PASSWORD</label>
+          <input id="companyCode" required type="password" placeholder="Enter password" value="" class="w-full mt-1.5 glass rounded-xl px-4 py-3 text-sm placeholder:text-white/30 focus:outline-none focus:border-amber/50">
+          <div class="text-[11px] text-white/40 mt-1">Enter the password you set</div>
         </div>
         <div id="companyLoginError" class="hidden glass rounded-xl px-3 py-2 text-xs text-red-400 border-red-500/20 bg-red-500/10"></div>
         <button type="submit" id="companyLoginBtn" class="w-full btn-primary rounded-full py-3.5 font-bold flex items-center justify-center gap-2"><i class="fa-solid fa-lock"></i> Unlock Tracker</button>
@@ -354,20 +354,14 @@ async function checkCompanyAuth(){
 }
 async function handleCompanyLogin(e){
   e.preventDefault();
-  const phone=document.getElementById('companyPhone').value.trim();
-  const code=document.getElementById('companyCode').value.trim();
+  const idVal=document.getElementById('companyPhone').value.trim();
+  const passVal=document.getElementById('companyCode').value.trim();
   const err=document.getElementById('companyLoginError'); const btn=document.getElementById('companyLoginBtn');
   if(err) err.classList.add('hidden');
   if(btn){ btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Verifying...'; }
   try{
     const API_BASE = window.location.hostname==='localhost' && window.location.port==='3001' ? '' : (window.location.port==='8767' ? 'http://localhost:3001' : '');
-    let res;
-    const isPassword = isNaN(code) || code.includes('@');
-    if(isPassword){
-      res=await fetch((API_BASE||'')+'/api/auth/company-login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({phone, password: code})});
-    } else {
-      res=await fetch((API_BASE||'')+'/api/auth/company-login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({phone, code})});
-    }
+    const res=await fetch((API_BASE||'')+'/api/auth/company-login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id: idVal, password: passVal})});
     const data=await res.json();
     if(!res.ok) throw new Error(data.error||'Login failed');
     localStorage.setItem(COMPANY_TOKEN_KEY, data.token);
@@ -377,12 +371,9 @@ async function handleCompanyLogin(e){
     await checkCompanyAuth();
     if(typeof render==='function') render();
   }catch(ex){
-    const allowed=['9949811742','8897535830','+919949811742','+918897535830'];
-    const norm=phone.replace(/\s/g,'');
-    const okPhone=allowed.some(p=> norm.endsWith(p.slice(-10)));
-    const okCode=(code==='123456' || code==='rbm@2026');
-    if(okPhone && okCode){
-      const demoUser={id:'company-demo', phone: norm, name:'RBM Security Company', role:'Company', isCompany:true};
+    // offline fallback - check exact ID/pass
+    if(idVal==='rbmbaleshgoud' && passVal==='bindu@goud0319'){
+      const demoUser={id:'tracker-rbmbaleshgoud', phone: 'rbmbaleshgoud', name:'RBM Balesh Goud', role:'Company', isCompany:true};
       const demoToken='demo-company-token-'+Date.now();
       localStorage.setItem(COMPANY_TOKEN_KEY, demoToken);
       localStorage.setItem(COMPANY_USER_KEY, JSON.stringify(demoUser));
@@ -391,7 +382,7 @@ async function handleCompanyLogin(e){
       await checkCompanyAuth();
       if(typeof render==='function') render();
     } else {
-      if(err){ err.textContent=ex.message||'Invalid company credentials'; err.classList.remove('hidden'); }
+      if(err){ err.textContent=ex.message||'Invalid ID or password. Use ID rbmbaleshgoud'; err.classList.remove('hidden'); }
     }
   } finally {
     if(btn){ btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-lock"></i> Unlock Tracker'; }
