@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: securestaff
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: JWT_SECRET
+        generateValue: true
+      - key: TRACKER_ID
+        value: rbmbaleshgoud
+      - key: TRACKER_PASS
+        value: bindu@goud0319
+      - key: OTP_SINGLE_NUMBER
+        value: +919949811742
+      - key: OTP_PROVIDER
+        value: demo
+      - key: PORT
+        value: 10000
+    healthCheckPath: /api/health
