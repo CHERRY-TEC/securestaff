@@ -409,8 +409,13 @@ async function checkCompanyAuth(){
       const API_BASE = window.location.hostname==='localhost' && window.location.port==='3001' ? '' : (window.location.port==='8767' ? 'http://localhost:3001' : '');
       const res=await fetch((API_BASE||'')+'/api/auth/company-me', {headers:{'Authorization':'Bearer '+token}});
       if(res.ok){ showCompanyGate(false); const b=document.getElementById('companyBadge'); const bt=document.getElementById('companyBadgeText'); if(b) b.classList.remove('hidden'); if(bt) bt.textContent=user.name||'Company'; return true; }
-    }catch(e){}
-    showCompanyGate(false); return true;
+      // token invalid or expired - show gate
+      showCompanyGate(true); return false;
+    }catch(e){
+      // network error - do not hide gate, require server verification
+      console.log('auth check failed', e.message);
+      showCompanyGate(true); return false;
+    }
   }
   showCompanyGate(true); return false;
 }
@@ -433,19 +438,7 @@ async function handleCompanyLogin(e){
     await checkCompanyAuth();
     if(typeof render==='function') render();
   }catch(ex){
-    // offline fallback - check ID/pass case-insensitive for ID
-    if(idVal.toLowerCase()==='rbmbaleshgoud' && passVal==='bindu@goud0319'){
-      const demoUser={id:'tracker-rbmbaleshgoud', phone: 'rbmbaleshgoud', name:'RBM Balesh Goud', role:'Company', isCompany:true};
-      const demoToken='demo-company-token-'+Date.now();
-      localStorage.setItem(COMPANY_TOKEN_KEY, demoToken);
-      localStorage.setItem(COMPANY_USER_KEY, JSON.stringify(demoUser));
-      localStorage.setItem('rbm_token', demoToken);
-      localStorage.setItem('rbm_user', JSON.stringify(demoUser));
-      await checkCompanyAuth();
-      if(typeof render==='function') render();
-    } else {
-      if(err){ err.textContent=ex.message||'Invalid ID or password. Use ID rbmbaleshgoud'; err.classList.remove('hidden'); }
-    }
+    if(err){ err.textContent=ex.message||'Invalid ID or password. Use ID rbmbaleshgoud'; err.classList.remove('hidden'); }
   } finally {
     if(btn){ btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-lock"></i> Unlock Tracker'; }
   }
@@ -498,12 +491,12 @@ async function loadLiveJobs(){
     if(empty) empty.classList.add('hidden');
     list.innerHTML=jobs.map(j=>`
       <div class="glass rounded-xl p-3 flex gap-3 items-center">
-        <img src="${j.img}" class="w-12 h-12 rounded-lg object-cover">
+        <img src="${esc(j.img)}" class="w-12 h-12 rounded-lg object-cover">
         <div class="flex-1 min-w-0">
-          <div class="font-bold text-sm truncate">${j.title}</div>
-          <div class="text-xs text-white/50 truncate">${j.company} • ${j.loc}</div>
-          <div class="text-xs font-bold text-amber mt-1">${j.salary} <span class="text-white/30 font-normal">• ${j.type}</span></div>
-          <div class="text-[11px] text-white/30">${j.cat} • ${j.applicants||0} applicants</div>
+          <div class="font-bold text-sm truncate">${esc(j.title)}</div>
+          <div class="text-xs text-white/50 truncate">${esc(j.company)} • ${esc(j.loc)}</div>
+          <div class="text-xs font-bold text-amber mt-1">${esc(j.salary)} <span class="text-white/30 font-normal">• ${esc(j.type)}</span></div>
+          <div class="text-[11px] text-white/30">${esc(j.cat)} • ${j.applicants||0} applicants</div>
         </div>
         <div class="flex flex-col gap-1">
           <button onclick="editLiveJob(${j.id})" class="px-3 py-1 rounded-full bg-amber/20 text-amber border border-amber/30 text-xs font-bold hover:bg-amber hover:text-ink">Edit</button>

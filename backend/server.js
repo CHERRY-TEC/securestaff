@@ -121,12 +121,23 @@ function addAudit(entry){
   fs.writeFileSync(AUDIT_PATH, JSON.stringify(logs, null, 2));
 }
 
-// Multer
+// Multer - fixed path traversal and file type
 const storage = multer.diskStorage({
   destination: (req,file,cb)=> cb(null, path.join(__dirname, 'uploads')),
-  filename: (req,file,cb)=> cb(null, Date.now()+'-'+file.originalname.replace(/\s/g,'_'))
+  filename: (req,file,cb)=> {
+    const safe = path.basename(file.originalname).replace(/[^a-zA-Z0-9._-]/g,'_');
+    cb(null, Date.now()+'-'+uuidv4()+'-'+safe);
+  }
 });
-const upload = multer({ storage, limits:{fileSize: 5*1024*1024} });
+const upload = multer({
+  storage,
+  limits:{fileSize: 5*1024*1024, files:2, fields:10},
+  fileFilter: (req,file,cb)=>{
+    const allowed = ['image/jpeg','image/png','image/webp','image/jpg'];
+    if(allowed.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Only JPG/PNG/WEBP images allowed'), false);
+  }
+});
 
 // Auth middleware
 function auth(req,res,next){
@@ -224,15 +235,17 @@ app.post('/api/auth/verify-otp', async (req,res)=>{
   const {phone, code, name, role} = req.body;
   const db = loadDB();
   const otp = db.otps[phone];
-  // allow demo 123456 even if OTP_PROVIDER set, for testing
-  const isDemoBypass = code==='123456' && (phone==='rbmbaleshgoud' || code==='123456');
-  if(!otp || (otp.code !== code && code!=='123456') || Date.now() > otp.expires){
-    if(code!=='123456') return res.status(400).json({error:'Invalid or expired OTP. Demo use 123456'});
+  // Strict OTP check - no bypass for 123456 except for single-number demo (handled via send-otp)
+  if(!otp || otp.code !== code || Date.now() > otp.expires){
+    return res.status(400).json({error:'Invalid or expired OTP'});
   }
   let user = db.users.find(u=> u.phone===phone);
   if(!user){
-    const isCompany = (role||'').toLowerCase().includes('company') || (role||'').toLowerCase().includes('admin');
-    user = {id: uuidv4(), phone, name: name || otp?.name || 'RBM User', role: role || otp?.role || 'Job Seeker — Guard', isCompany: isCompany, createdAt: new Date().toISOString()};
+    // Role whitelist - cannot self-assign Company/Admin via OTP, only Job Seeker roles
+    const allowedRoles = ['Job Seeker — Guard','Job Seeker — Housekeeping','Job Seeker — Ward Boy','Job Seeker — Helper','Job Seeker — Servant','Job Seeker','Employer'];
+    const requestedRole = role || otp?.role || 'Job Seeker — Guard';
+    const safeRole = allowedRoles.includes(requestedRole) ? requestedRole : 'Job Seeker — Guard';
+    user = {id: uuidv4(), phone, name: name || otp?.name || 'RBM User', role: safeRole, isCompany: false, createdAt: new Date().toISOString()};
     db.users.push(user);
   }
   if(otp) delete db.otps[phone];
@@ -246,15 +259,8 @@ app.post('/api/auth/verify-otp', async (req,res)=>{
 });
 
 app.post('/api/auth/login', async (req,res)=>{
-  const {phone} = req.body;
-  const db = loadDB();
-  let user = db.users.find(u=> u.phone===phone);
-  if(!user) return res.status(404).json({error:'User not found, please register'});
-  const token = jwt.sign({id:user.id, phone:user.phone, name:user.name, role:user.role, isCompany: !!user.isCompany}, JWT_SECRET, {expiresIn: JWT_EXPIRES});
-  const refreshToken = jwt.sign({id:user.id, type:'refresh'}, JWT_SECRET, {expiresIn: JWT_REFRESH_EXPIRES});
-  db.refreshTokens[refreshToken] = {userId: user.id, createdAt: new Date().toISOString()};
-  await saveDBLocked(db);
-  res.json({ok:true, token, refreshToken, user});
+  // Disabled - use OTP flow for security. This endpoint allowed login with just phone (critical bypass).
+  return res.status(410).json({error:'Use OTP flow: POST /api/auth/send-otp then /api/auth/verify-otp'});
 });
 
 // JWT refresh
@@ -546,14 +552,19 @@ app.post('/api/applications', upload.fields([{name:'photo', maxCount:1}, {name:'
   if(req.files && req.files.photo && req.files.photo[0]){
     photoUrl = '/uploads/'+req.files.photo[0].filename;
   } else if(body.photo){
-    if(body.photo.startsWith('data:image')){
+    if(body.photo.startsWith('data:image/jpeg') || body.photo.startsWith('data:image/png') || body.photo.startsWith('data:image/webp')){
+      if(body.photo.length > 2*1024*1024) return res.status(400).json({error:'Photo too large (max 2MB)'});
       const base64 = body.photo.split(',')[1];
-      const filename = Date.now()+'-photo.jpg';
+      if(!base64 || base64.length > 3*1024*1024) return res.status(400).json({error:'Invalid image'});
+      const filename = Date.now()+'-'+uuidv4()+'.jpg';
       const fp = path.join(__dirname, 'uploads', filename);
-      fs.writeFileSync(fp, Buffer.from(base64, 'base64'));
-      photoUrl = '/uploads/'+filename;
-    } else {
-      photoUrl = body.photo;
+      try{ fs.writeFileSync(fp, Buffer.from(base64, 'base64')); photoUrl = '/uploads/'+filename; }catch(e){ return res.status(400).json({error:'Invalid image data'}); }
+    } else if(body.photo.startsWith('/uploads/')){
+      // allow only our uploads path, not arbitrary URL
+      if(/^\/uploads\/[a-zA-Z0-9._-]+\.(jpg|png|webp)$/.test(body.photo)) photoUrl = body.photo;
+      else return res.status(400).json({error:'Invalid photo URL'});
+    } else if(body.photo){
+      return res.status(400).json({error:'Invalid photo format'});
     }
   }
   const app = {
