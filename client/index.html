@@ -179,14 +179,19 @@ body{background:#070A14;color:white;overflow-x:hidden}
   </div>
 </div>
 
-<!-- ===== LOADER — FULLSCREEN VIDEO ===== -->
+<!-- ===== LOADER — FULLSCREEN VIDEO - PHONE OPTIMIZED ===== -->
 <div id="loader">
-  <!-- Fullscreen video — auto-starts, sound always on, no line -->
+  <!-- Fullscreen video — phone: muted autoplay guaranteed, fallback logo if video fails -->
   <div class="video-wrap">
-    <video id="logoVideo" autoplay muted playsinline webkit-playsinline preload="auto" poster="" disablePictureInPicture controlsList="nodownload" style="background:#000">
+    <video id="logoVideo" autoplay muted playsinline webkit-playsinline preload="auto" poster="./rbm-logo.png" disablePictureInPicture controlsList="nodownload" crossorigin="anonymous" style="background:#000">
       <source src="./logo-animation.mp4" type="video/mp4">
       Your browser does not support video.
     </video>
+    <div id="videoFallback" class="absolute inset-0 hidden items-center justify-center bg-black flex-col gap-4">
+      <img src="./rbm-logo.png" alt="RBM" class="w-24 h-24 object-contain opacity-90">
+      <div class="text-amber font-space font-bold tracking-[-0.02em]">RBM SECURITY</div>
+      <div class="w-24 h-1 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-amber animate-pulse w-1/2"></div></div>
+    </div>
   </div>
   <!-- hidden progress (kept for JS, no visual) -->
   <div id="loaderProgress" class="hidden" style="width:0%"></div>
@@ -1794,64 +1799,58 @@ function startRafProgress(){
 
 document.body.style.overflow='hidden';
 
-// Pre-warm video — auto-start guaranteed + sound always ON
+// Pre-warm video — AUTO-START without touch (muted autoplay is allowed on all phones)
 if(video){
   video.setAttribute('webkit-playsinline','');
   video.setAttribute('playsinline','');
-  // start muted to guarantee autoplay, then unmute immediately for sound-on
-  video.muted = true;
-  video.volume = 1;
-  video.defaultMuted = false;
+  video.muted = true; // keep muted for autoplay - no touch needed
+  video.volume = 0;
+  video.defaultMuted = true;
   const btnInit = document.getElementById('unmuteBtn');
-  if(btnInit) btnInit.innerHTML = '<i class="fa-solid fa-volume-high text-sm"></i>';
-  const markReady = ()=>{ video.classList.add('is-ready'); };
+  if(btnInit) btnInit.innerHTML = '<i class="fa-solid fa-volume-xmark text-xs"></i>';
+  const fb = document.getElementById('videoFallback');
+  const markReady = ()=>{ 
+    video.classList.add('is-ready'); 
+    if(fb){ fb.classList.add('hidden'); fb.classList.remove('flex'); }
+  };
+  const showFallback = ()=>{
+    if(fb){ fb.classList.remove('hidden'); fb.classList.add('flex'); }
+    // still mark video ready to show fallback bg
+    video.classList.add('is-ready');
+  };
   video.addEventListener('canplay', markReady, {once:true});
   video.addEventListener('loadeddata', markReady, {once:true});
-  if(video.readyState >= 3) markReady();
+  video.addEventListener('canplaythrough', markReady, {once:true});
+  if(video.readyState >= 2) markReady();
 
-  // Auto-start: muted autoplay is allowed, then switch to sound-on
-  const autoStartWithSound = ()=>{
-    video.muted = true; // ensure autoplay succeeds
+  // AUTO-START: muted autoplay - works on iOS/Android without touch
+  const autoStartMuted = ()=>{
+    video.muted = true;
+    video.volume = 0;
     const p = video.play();
     if(p && p.then){
       p.then(()=>{
-        // playback started — now enable sound
-        setTimeout(()=>{
-          video.muted = false;
-          video.volume = 1;
-          const b = document.getElementById('unmuteBtn');
-          if(b) b.innerHTML = '<i class="fa-solid fa-volume-high text-sm"></i>';
-          // some browsers block unmute without gesture — if still muted, wait for interaction
-          if(video.muted){
-            const enableOnInteraction = ()=>{
-              video.muted = false;
-              video.volume = 1;
-              video.play().catch(()=>{});
-              if(b) b.innerHTML = '<i class="fa-solid fa-volume-high text-sm"></i>';
-              document.removeEventListener('click', enableOnInteraction);
-              document.removeEventListener('touchstart', enableOnInteraction);
-            };
-            document.addEventListener('click', enableOnInteraction, {once:true});
-            document.addEventListener('touchstart', enableOnInteraction, {once:true});
-          }
-        }, 200);
-      }).catch(()=>{
-        // muted autoplay also blocked (rare) — try again with muted and then enable sound on interaction
+        markReady();
+        // stay muted - user can tap unmuteBtn to enable sound
+      }).catch((e)=>{
+        console.log('autoplay blocked', e);
+        // show fallback but still try to play muted again
         video.muted = true;
-        video.play().catch(()=>{});
-        const enable = ()=>{
-          video.muted = false;
-          video.volume = 1;
-          video.play().catch(()=>{});
-          document.removeEventListener('click', enable);
-          document.removeEventListener('touchstart', enable);
-        };
-        document.addEventListener('click', enable, {once:true});
-        document.addEventListener('touchstart', enable, {once:true});
+        video.play().catch(()=>{ showFallback(); });
+        // do NOT require touch - will retry on next frame
+        setTimeout(autoStartMuted, 500);
       });
+    } else {
+      // older browsers
+      markReady();
     }
   };
-  autoStartWithSound();
+  // try immediately and also on DOM ready
+  autoStartMuted();
+  document.addEventListener('DOMContentLoaded', autoStartMuted, {once:true});
+  window.addEventListener('load', autoStartMuted, {once:true});
+  // retry once more after 300ms for slow phones
+  setTimeout(autoStartMuted, 300);
 
   video.addEventListener('loadedmetadata', ()=>{
     startFallbackLoader();
@@ -1879,39 +1878,57 @@ if(video){
   video.addEventListener('error', ()=>{
     clearInterval(loaderInterval);
     if(rafId) cancelAnimationFrame(rafId);
+    const fb=document.getElementById('videoFallback');
+    if(fb){ fb.classList.remove('hidden'); fb.classList.add('flex'); }
+    video.classList.add('is-ready');
     startFallbackLoader();
-    setTimeout(hideLoader, 3500);
+    setTimeout(hideLoader, 2500);
   });
-  // if video doesn't start in 700ms, ensure fallback + is-ready
+  // if video doesn't start in 800ms, show it anyway + ensure fallback visible on phone
   setTimeout(()=>{
     if(loaderInterval===null && rafId===null) startFallbackLoader();
-    if(video.readyState < 2) video.classList.add('is-ready'); // show poster/black smoothly
-  }, 700);
+    if(video.readyState < 2){
+      video.classList.add('is-ready');
+      // on phone with slow network, show fallback logo while video buffers
+      const isPhone = window.innerWidth < 768 || /iPhone|iPad|Android/i.test(navigator.userAgent);
+      if(isPhone && video.readyState < 3){
+        const fb=document.getElementById('videoFallback');
+        if(fb && video.currentTime < 0.3){
+          fb.classList.remove('hidden'); fb.classList.add('flex');
+          // hide fallback once video actually plays
+          video.addEventListener('play', ()=>{ fb.classList.add('hidden'); fb.classList.remove('flex'); }, {once:true});
+        }
+      }
+    }
+  }, 800);
 } else {
   startFallbackLoader();
-  setTimeout(hideLoader, 3400);
+  const fb=document.getElementById('videoFallback');
+  if(fb){ fb.classList.remove('hidden'); fb.classList.add('flex'); }
+  setTimeout(hideLoader, 3000);
 }
 
-// click video/loader to toggle mute or resume with sound
+// click video/loader to toggle mute - tap does NOT require to start video, video already auto-started muted
 if(video){
   video.addEventListener('click', ()=> toggleMute());
   document.getElementById('loader')?.addEventListener('click', (e)=>{
     if(e.target.closest('button')) return;
-    if(video.paused){
-      video.muted = false;
-      video.volume = 1;
-      video.play().catch(()=>{});
-      const btn = document.getElementById('unmuteBtn');
-      if(btn) btn.innerHTML = '<i class="fa-solid fa-volume-high text-sm"></i>';
-    } else {
-      // tap toggles mute
-      toggleMute();
-    }
+    // single tap toggles mute (video already playing muted)
+    toggleMute();
   });
 }
 
-// failsafe hide after 12s max (in case long video)
-setTimeout(()=>{ if(!loaderDone) hideLoader(); }, 12000);
+// phone: ensure video auto-starts even if browser paused it - retry on visibility
+document.addEventListener('visibilitychange', ()=>{
+  if(!document.hidden && video && video.paused && !loaderDone){
+    video.muted = true;
+    video.play().catch(()=>{});
+  }
+});
+
+// failsafe hide - phone should auto-hide quickly (4s) even if video still loading
+const isPhoneFS = window.innerWidth < 768 || /iPhone|iPad|Android/i.test(navigator.userAgent);
+setTimeout(()=>{ if(!loaderDone) hideLoader(); }, isPhoneFS ? 4500 : 7000);
 
 // NAV SCROLL
 const nav = document.getElementById('navbar');
