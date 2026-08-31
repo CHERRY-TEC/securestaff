@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RBM Security â€” Applications Dashboard</title>
+<title>RBM Security — Applications Dashboard</title>
 <meta name="description" content="View all job applications for RBM Security - Telangana">
 <link rel="icon" type="image/png" href="./rbm-logo.png">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
@@ -87,7 +87,7 @@ body{
         </div>
         <div>
           <label class="text-xs font-bold tracking-widest text-white/60">PASSWORD</label>
-          <input id="companyCode" required type="password" placeholder="Enter password" value="" class="w-full mt-1.5 glass rounded-xl px-4 py-3 text-sm placeholder:text-white/30 focus:outline-none focus:border-amber/50">
+          <input id="companyCode" required type="password" placeholder="Enter password" value="" class="w-full mt-1.5 glass rounded-xl px-4 py-3 text-sm placeholder:text-white/30 focus:outline-none focus:border-amber/50" onkeydown="if(event.key==='Enter'){event.preventDefault();handleCompanyLogin(event);}">
           <div class="text-[11px] text-white/40 mt-1">Enter the password you set</div>
         </div>
         <div id="companyLoginError" class="hidden glass rounded-xl px-3 py-2 text-xs text-red-400 border-red-500/20 bg-red-500/10"></div>
@@ -100,7 +100,7 @@ body{
 <div class="orb orb-a"></div>
 <div class="orb orb-b"></div>
 <div class="orb orb-c"></div>
-<!-- NAV â€” Glass Strong -->
+<!-- NAV — Glass Strong -->
 <nav class="sticky top-0 z-40 glass-strong border-b border-white/10" style="backdrop-filter: blur(32px) saturate(200%);">
   <div class="max-w-[1280px] mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
     <div class="flex items-center gap-3">
@@ -210,7 +210,7 @@ body{
     <div class="glass stat-card rounded-2xl p-5 relative overflow-hidden">
       <div class="absolute -top-6 -right-6 w-16 h-16 bg-violet-500/10 blur-2xl rounded-full"></div>
       <div class="text-xs tracking-widest text-white/50 font-mono">TOP JOB</div>
-      <div class="text-sm font-bold mt-2 leading-tight line-clamp-2" id="statJob">â€”</div>
+      <div class="text-sm font-bold mt-2 leading-tight line-clamp-2" id="statJob">—</div>
       <div class="text-xs text-white/40 mt-1" id="statJobSub">most applied</div>
     </div>
   </div>
@@ -310,7 +310,7 @@ body{
     <div class="h-[180px] mt-3 relative"><canvas id="perfChart"></canvas></div>
   </div>
 
-  <!-- FILTERS â€” Glass Strong -->
+  <!-- FILTERS — Glass Strong -->
   <div class="glass-strong rounded-2xl p-4 mt-4 flex flex-wrap gap-3 items-center">
     <div class="relative flex-1 min-w-[220px]">
       <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30 text-sm"></i>
@@ -346,7 +346,7 @@ body{
     <button onclick="exportCSV()" class="btn-ghost rounded-full px-5 py-2.5 text-sm font-semibold md:hidden flex-1"><i class="fa-solid fa-download mr-2"></i>Export</button>
   </div>
 
-  <!-- TABLE â€” Glass Morphism -->
+  <!-- TABLE — Glass Morphism -->
   <div class="glass rounded-2xl overflow-hidden mt-4" style="backdrop-filter: blur(20px) saturate(180%);">
     <div class="overflow-x-auto">
       <table class="w-full text-sm table-glass">
@@ -391,7 +391,7 @@ body{
     </div>
   </div>
 
-  <div class="text-center text-xs text-white/25 py-6">Â© 2026 RBM Security Services â€¢ Uppal, Hyderabad, Telangana â€¢ 99498 11742 / 88975 35830 â€¢ rbm.uppal@gmail.com</div>
+  <div class="text-center text-xs text-white/25 py-6">© 2026 RBM Security Services â€¢ Uppal, Hyderabad, Telangana â€¢ 99498 11742 / 88975 35830 â€¢ rbm.uppal@gmail.com</div>
 </div>
 
 <script>
@@ -577,8 +577,8 @@ let apps = getApps();
 function seedDemo(){
   const demo = [
     {id: Date.now()-300000, name:'Ramesh Kumar', phone:'+91 98765 43210', city:'Hyderabad', exp:'3-5 years', docs:'Aadhaar, PSARA', jobTitle:'Residential Security Guard', date:new Date(Date.now()-86400000*1).toISOString(), status:'New'},
-    {id: Date.now()-200000, name:'Suresh Yadav', phone:'+91 98480 11223', city:'Warangal', exp:'5+ years (Ex-Army)', docs:'Aadhaar, Arms License', jobTitle:'Armed Guard â€” Cash Van', date:new Date(Date.now()-3600000*5).toISOString(), status:'New'},
-    {id: Date.now()-100000, name:'Lakshmi Priya', phone:'+91 90001 23456', city:'Karimnagar', exp:'1-2 years', docs:'Aadhaar', jobTitle:'Housekeeping Staff â€” 5 Star Hotel', date:new Date().toISOString(), status:'New'},
+    {id: Date.now()-200000, name:'Suresh Yadav', phone:'+91 98480 11223', city:'Warangal', exp:'5+ years (Ex-Army)', docs:'Aadhaar, Arms License', jobTitle:'Armed Guard — Cash Van', date:new Date(Date.now()-3600000*5).toISOString(), status:'New'},
+    {id: Date.now()-100000, name:'Lakshmi Priya', phone:'+91 90001 23456', city:'Karimnagar', exp:'1-2 years', docs:'Aadhaar', jobTitle:'Housekeeping Staff — 5 Star Hotel', date:new Date().toISOString(), status:'New'},
   ];
   const cur = getApps();
   const merged = [...demo, ...cur];
