@@ -140,6 +140,52 @@ body{
   </div>
 </div>
 
+<!-- LIVE WEBSITE JOBS - EDIT SALARY & COUNT (admin controls main site) -->
+<div class="max-w-[1280px] mx-auto px-4 md:px-6 pt-4">
+  <div class="glass rounded-2xl p-4">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400"><i class="fa-solid fa-briefcase"></i></div>
+        <div>
+          <div class="font-bold text-sm">Live Website Jobs — Edit from Tracker</div>
+          <div class="text-xs text-white/50">Changes here update the main company website instantly. Edit salary, delete, or add jobs.</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-white/40">Total on website:</span>
+        <span id="liveJobsCount" class="bg-amber text-ink text-sm font-bold px-3 py-1 rounded-full">0</span>
+        <button onclick="loadLiveJobs()" class="w-8 h-8 rounded-full glass flex items-center justify-center" title="Refresh"><i class="fa-solid fa-rotate text-xs"></i></button>
+        <button onclick="openAddJobModal()" class="btn-primary rounded-full px-4 py-2 text-sm font-bold"><i class="fa-solid fa-plus mr-1"></i>Add Job</button>
+      </div>
+    </div>
+    <div id="liveJobsList" class="mt-4 grid md:grid-cols-2 gap-3 max-h-[520px] overflow-auto pr-1"></div>
+    <div id="liveJobsEmpty" class="hidden text-center text-sm text-white/40 py-8">No jobs on website. Add one.</div>
+  </div>
+</div>
+
+<!-- Add Job Modal -->
+<div id="addJobModal" class="fixed inset-0 z-[60] hidden">
+  <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick="closeAddJobModal()"></div>
+  <div class="relative min-h-[100dvh] flex items-center justify-center p-4">
+    <div class="glass-strong rounded-2xl max-w-[480px] w-full p-6 relative max-h-[90vh] overflow-auto">
+      <button onclick="closeAddJobModal()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i class="fa-solid fa-xmark text-xs"></i></button>
+      <h3 class="font-bold text-lg">Add / Edit Job on Website</h3>
+      <p class="text-xs text-white/50 mt-1">This will appear instantly on the public company website.</p>
+      <form onsubmit="handleAddJob(event)" class="mt-4 space-y-3">
+        <input id="jobEditId" type="hidden">
+        <input id="jobTitle" required placeholder="Job Title e.g., Security Guard" class="w-full glass rounded-xl px-4 py-3 text-sm">
+        <input id="jobCompany" required placeholder="Company e.g., DLF Magnolias" class="w-full glass rounded-xl px-4 py-3 text-sm">
+        <select id="jobCat" class="w-full glass rounded-xl px-4 py-3 text-sm bg-transparent"><option value="guard">Guard</option><option value="housekeeping">Housekeeping</option><option value="wardboy">Ward Boy</option><option value="helper">Helper</option><option value="servant">Servant</option><option value="manpower">Manpower</option><option value="cctv">CCTV</option><option value="bouncer">Bouncer</option><option value="armed">Armed</option></select>
+        <input id="jobLoc" required placeholder="Location e.g., Hyderabad • Gachibowli" class="w-full glass rounded-xl px-4 py-3 text-sm">
+        <input id="jobSalary" required placeholder="Salary e.g., ₹22k - ₹28k" class="w-full glass rounded-xl px-4 py-3 text-sm">
+        <input id="jobType" placeholder="Type e.g., Full-time • 8h shift" class="w-full glass rounded-xl px-4 py-3 text-sm">
+        <input id="jobTags" placeholder="Tags comma separated e.g., Immediate Joining, Food + Stay" class="w-full glass rounded-xl px-4 py-3 text-sm">
+        <button type="submit" class="w-full btn-primary rounded-full py-3 font-bold">Save to Website</button>
+      </form>
+    </div>
+  </div>
+</div>
+
 <!-- HERO STATS -->
 <div class="max-w-[1280px] mx-auto px-4 md:px-6 pt-6">
   <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -438,8 +484,96 @@ async function saveOtpNumber(){
   }catch(e){ alert(e.message||'Failed to save'); }
 }
 const _origCheckCompanyAuth2 = checkCompanyAuth;
-checkCompanyAuth = async function(){ const r=await _origCheckCompanyAuth2(); if(r) loadOtpNumber(); return r; };
+checkCompanyAuth = async function(){ const r=await _origCheckCompanyAuth2(); if(r){ loadOtpNumber(); loadLiveJobs(); } return r; };
 document.addEventListener('DOMContentLoaded', ()=>{ checkCompanyAuth(); });
+
+// === LIVE WEBSITE JOBS - Admin can edit salary & count directly ===
+async function loadLiveJobs(){
+  const list=document.getElementById('liveJobsList'); const empty=document.getElementById('liveJobsEmpty'); const cnt=document.getElementById('liveJobsCount');
+  if(!list) return;
+  try{
+    const data=await api2('/api/jobs');
+    if(!data || !data.jobs){ if(empty) empty.classList.remove('hidden'); return; }
+    const jobs=data.jobs;
+    if(cnt) cnt.textContent=jobs.length;
+    if(jobs.length===0){ list.innerHTML=''; if(empty) empty.classList.remove('hidden'); return; }
+    if(empty) empty.classList.add('hidden');
+    list.innerHTML=jobs.map(j=>`
+      <div class="glass rounded-xl p-3 flex gap-3 items-center">
+        <img src="${j.img}" class="w-12 h-12 rounded-lg object-cover">
+        <div class="flex-1 min-w-0">
+          <div class="font-bold text-sm truncate">${j.title}</div>
+          <div class="text-xs text-white/50 truncate">${j.company} • ${j.loc}</div>
+          <div class="text-xs font-bold text-amber mt-1">${j.salary} <span class="text-white/30 font-normal">• ${j.type}</span></div>
+          <div class="text-[11px] text-white/30">${j.cat} • ${j.applicants||0} applicants</div>
+        </div>
+        <div class="flex flex-col gap-1">
+          <button onclick="editLiveJob(${j.id})" class="px-3 py-1 rounded-full bg-amber/20 text-amber border border-amber/30 text-xs font-bold hover:bg-amber hover:text-ink">Edit</button>
+          <button onclick="deleteLiveJob(${j.id})" class="px-3 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/20 text-xs hover:bg-red-500 hover:text-white">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  }catch(e){
+    console.log('loadLiveJobs fail', e.message);
+    if(empty){ empty.textContent='Failed to load jobs. Check company login.'; empty.classList.remove('hidden'); }
+  }
+}
+function openAddJobModal(){
+  document.getElementById('jobEditId').value='';
+  document.getElementById('jobTitle').value='';
+  document.getElementById('jobCompany').value='';
+  document.getElementById('jobLoc').value='';
+  document.getElementById('jobSalary').value='';
+  document.getElementById('jobType').value='';
+  document.getElementById('jobTags').value='';
+  document.getElementById('addJobModal').classList.remove('hidden');
+}
+function closeAddJobModal(){ document.getElementById('addJobModal').classList.add('hidden'); }
+async function editLiveJob(id){
+  try{
+    const data=await api2('/api/jobs');
+    const j=data.jobs.find(x=> x.id===id);
+    if(!j) return alert('Job not found');
+    document.getElementById('jobEditId').value=j.id;
+    document.getElementById('jobTitle').value=j.title;
+    document.getElementById('jobCompany').value=j.company;
+    document.getElementById('jobCat').value=j.cat;
+    document.getElementById('jobLoc').value=j.loc;
+    document.getElementById('jobSalary').value=j.salary;
+    document.getElementById('jobType').value=j.type;
+    document.getElementById('jobTags').value=(j.tags||[]).join(', ');
+    document.getElementById('addJobModal').classList.remove('hidden');
+  }catch(e){ alert(e.message); }
+}
+async function deleteLiveJob(id){
+  if(!confirm('Delete this job from website? Visitors will no longer see it.')) return;
+  try{
+    const res=await api2('/api/jobs/'+id, {method:'DELETE'});
+    if(res && res.ok){ loadLiveJobs(); alert('Job deleted from website.'); } else throw new Error('Delete failed');
+  }catch(e){ alert(e.message); }
+}
+async function handleAddJob(e){
+  e.preventDefault();
+  const id=document.getElementById('jobEditId').value;
+  const payload={
+    title: document.getElementById('jobTitle').value.trim(),
+    company: document.getElementById('jobCompany').value.trim(),
+    cat: document.getElementById('jobCat').value,
+    loc: document.getElementById('jobLoc').value.trim(),
+    salary: document.getElementById('jobSalary').value.trim(),
+    type: document.getElementById('jobType').value.trim(),
+    tags: document.getElementById('jobTags').value.trim(),
+  };
+  try{
+    let res;
+    if(id){
+      res=await api2('/api/jobs/'+id, {method:'PATCH', body: JSON.stringify(payload)});
+    } else {
+      res=await api2('/api/jobs', {method:'POST', body: JSON.stringify(payload)});
+    }
+    if(res && res.ok){ closeAddJobModal(); loadLiveJobs(); alert(id ? 'Job updated on website!' : 'Job added to website!'); } else throw new Error(res?.error||'Failed');
+  }catch(e){ alert(e.message); }
+}
 
 const KEY = 'rbm_applications';
 function getApps(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch(e){ return []; } }

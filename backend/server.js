@@ -481,6 +481,29 @@ app.post('/api/jobs', auth, requireCompanyAuth, async (req,res)=>{
   res.json({ok:true, job});
 });
 
+app.patch('/api/jobs/:id', auth, requireCompanyAuth, async (req,res)=>{
+  const db = loadDB();
+  const id = parseInt(req.params.id);
+  const job = db.jobs.find(j=> j.id===id);
+  if(!job) return res.status(404).json({error:'Job not found'});
+  const {title, company, cat, loc, city, salary, type, tags, img} = req.body;
+  const old = {...job};
+  if(title!==undefined) job.title = title;
+  if(company!==undefined) job.company = company;
+  if(cat!==undefined) job.cat = cat;
+  if(loc!==undefined) job.loc = loc;
+  if(city!==undefined) job.loc = city + ' • Telangana';
+  if(salary!==undefined) job.salary = salary;
+  if(type!==undefined) job.type = type;
+  if(tags!==undefined) job.tags = Array.isArray(tags) ? tags : tags.split(',').map(s=>s.trim());
+  if(img!==undefined) job.img = img;
+  job.updatedAt = new Date().toISOString();
+  job.updatedBy = req.user.id;
+  await saveDBLocked(db);
+  addAudit({action:'update-job', jobId: id, changes: {from: old, to: job}, by: req.user.id, role: req.user.role});
+  res.json({ok:true, job});
+});
+
 app.delete('/api/jobs/:id', auth, requireCompanyAuth, async (req,res)=>{
   const db = loadDB();
   const id = parseInt(req.params.id);
