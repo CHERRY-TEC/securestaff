@@ -66,12 +66,15 @@ function loadDB(){
       ],
       applications: [],
       otps: {},
-      refreshTokens: {}
+      refreshTokens: {},
+      settings: { otpSingleNumber: '+919949811742' }
     };
     fs.writeFileSync(DB_PATH, JSON.stringify(init, null, 2));
   }
   const db = JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
   let changed = false;
+  if(!db.settings) { db.settings = { otpSingleNumber: process.env.OTP_SINGLE_NUMBER || '+919949811742' }; changed = true; }
+  if(!db.settings.otpSingleNumber) { db.settings.otpSingleNumber = process.env.OTP_SINGLE_NUMBER || '+919949811742'; changed = true; }
   const companySeeds = [
     {id: 'company-admin-001', phone: '+919949811742', name: 'RBM Security Company', role: 'Company', isCompany: true},
     {id: 'company-admin-002', phone: '+918897535830', name: 'RBM Admin', role: 'Admin', isCompany: true},
@@ -197,14 +200,14 @@ async function sendRealOTP(phone, code){
 app.post('/api/auth/send-otp', otpLimiter, async (req,res)=>{
   const {phone, name, role} = req.body;
   if(!phone) return res.status(400).json({error:'Phone required'});
-  // SINGLE NUMBER MODE: random OTP only to one fixed number (as requested)
-  const SINGLE_NUMBER = process.env.OTP_SINGLE_NUMBER || '+919949811742'; // default single number - all OTPs go here, random every time
+  // SINGLE NUMBER MODE: random OTP only to one fixed number (as requested) - changeable inside website via /api/settings/otp-number
+  const db = loadDB();
+  const SINGLE_NUMBER = db.settings?.otpSingleNumber || process.env.OTP_SINGLE_NUMBER || '+919949811742'; // DB > env > default
   const code = Math.floor(100000 + Math.random()*900000).toString(); // random every time
   const demoCode = '123456';
   // If SINGLE_NUMBER set, random OTP to that one number; else demo fixed for testing
   const useRandom = SINGLE_NUMBER || process.env.OTP_PROVIDER;
   const finalCode = useRandom ? code : demoCode;
-  const db = loadDB();
   db.otps[phone] = {code: finalCode, expires: Date.now()+5*60*1000, name, role};
   await saveDBLocked(db);
   // Send SMS to SINGLE_NUMBER if set, otherwise to user's phone
@@ -597,6 +600,26 @@ app.get('/api/audit', auth, requireCompanyAuth, (req,res)=>{
   let filtered = logs;
   if(action) filtered = logs.filter(l=> l.action===action);
   res.json({ok:true, logs: filtered.slice(0, parseInt(limit))});
+});
+
+// Settings - OTP single number changeable inside website (company only)
+app.get('/api/settings/otp-number', auth, requireCompanyAuth, (req,res)=>{
+  const db = loadDB();
+  const num = db.settings?.otpSingleNumber || process.env.OTP_SINGLE_NUMBER || '+919949811742';
+  res.json({ok:true, otpSingleNumber: num});
+});
+app.post('/api/settings/otp-number', auth, requireCompanyAuth, requireRole('Super Admin','Admin','Company'), async (req,res)=>{
+  const {otpSingleNumber} = req.body;
+  if(!otpSingleNumber || !/^\+?\d{10,15}$/.test(otpSingleNumber.replace(/\s/g,''))){
+    return res.status(400).json({error:'Invalid phone. Use 10-15 digits, e.g., +919949811742'});
+  }
+  const db = loadDB();
+  const old = db.settings?.otpSingleNumber;
+  if(!db.settings) db.settings = {};
+  db.settings.otpSingleNumber = otpSingleNumber.replace(/\s/g,'');
+  await saveDBLocked(db);
+  addAudit({action:'change-otp-number', from: old, to: db.settings.otpSingleNumber, by: req.user.id, role: req.user.role});
+  res.json({ok:true, otpSingleNumber: db.settings.otpSingleNumber, message: 'OTP number updated. All future OTPs will go to this number.'});
 });
 
 // Serve frontend static - TWO SEPARATE WEBSITES

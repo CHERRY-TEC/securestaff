@@ -122,6 +122,24 @@ body{
   </div>
 </nav>
 
+<!-- OTP SINGLE NUMBER SETTINGS - changeable inside website -->
+<div class="max-w-[1280px] mx-auto px-4 md:px-6 pt-4">
+  <div class="glass rounded-2xl p-4 flex flex-wrap gap-3 items-center">
+    <div class="flex items-center gap-2">
+      <div class="w-9 h-9 rounded-xl bg-amber/20 border border-amber/30 flex items-center justify-center text-amber"><i class="fa-solid fa-mobile-screen"></i></div>
+      <div>
+        <div class="font-bold text-sm">OTP Number Settings</div>
+        <div class="text-xs text-white/50">All OTPs go to this one number (random every time). Change it here without redeploy.</div>
+      </div>
+    </div>
+    <div class="flex-1 min-w-[200px] flex gap-2">
+      <input id="otpSingleInput" type="tel" placeholder="+919949811742" class="flex-1 glass rounded-full px-4 py-2.5 text-sm">
+      <button onclick="saveOtpNumber()" class="btn-primary rounded-full px-6 py-2.5 text-sm font-bold">Save</button>
+    </div>
+    <div class="text-xs text-white/40">Current: <span id="otpSingleCurrent" class="text-amber font-mono">loading...</span> <span id="otpSaveStatus" class="ml-2 hidden text-emerald-400"></span></div>
+  </div>
+</div>
+
 <!-- HERO STATS -->
 <div class="max-w-[1280px] mx-auto px-4 md:px-6 pt-6">
   <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -392,6 +410,35 @@ function companyLogout(){
   localStorage.removeItem(COMPANY_TOKEN_KEY); localStorage.removeItem(COMPANY_USER_KEY);
   showCompanyGate(true);
 }
+async function loadOtpNumber(){
+  try{
+    const token=getCompanyToken(); if(!token) return;
+    const API_BASE = window.location.hostname==='localhost' && window.location.port==='3001' ? '' : (window.location.port==='8767' ? 'http://localhost:3001' : '');
+    const res=await fetch((API_BASE||'')+'/api/settings/otp-number', {headers:{'Authorization':'Bearer '+token}});
+    const data=await res.json();
+    if(res.ok && data.otpSingleNumber){
+      const cur=document.getElementById('otpSingleCurrent'); const inp=document.getElementById('otpSingleInput');
+      if(cur) cur.textContent=data.otpSingleNumber;
+      if(inp && !inp.value) inp.value=data.otpSingleNumber;
+    }
+  }catch(e){ console.log('loadOtpNumber fail', e.message); }
+}
+async function saveOtpNumber(){
+  const inp=document.getElementById('otpSingleInput'); const status=document.getElementById('otpSaveStatus'); const cur=document.getElementById('otpSingleCurrent');
+  const val=inp ? inp.value.trim() : '';
+  if(!val || !/^\+?\d{10,15}$/.test(val.replace(/\s/g,''))){ alert('Enter valid phone, e.g., +919949811742'); return; }
+  try{
+    const token=getCompanyToken();
+    const API_BASE = window.location.hostname==='localhost' && window.location.port==='3001' ? '' : (window.location.port==='8767' ? 'http://localhost:3001' : '');
+    const res=await fetch((API_BASE||'')+'/api/settings/otp-number', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body: JSON.stringify({otpSingleNumber: val})});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.error);
+    if(cur) cur.textContent=data.otpSingleNumber;
+    if(status){ status.textContent='✓ Saved! All OTPs now go to '+data.otpSingleNumber; status.classList.remove('hidden'); setTimeout(()=>status.classList.add('hidden'), 3000); }
+  }catch(e){ alert(e.message||'Failed to save'); }
+}
+const _origCheckCompanyAuth2 = checkCompanyAuth;
+checkCompanyAuth = async function(){ const r=await _origCheckCompanyAuth2(); if(r) loadOtpNumber(); return r; };
 document.addEventListener('DOMContentLoaded', ()=>{ checkCompanyAuth(); });
 
 const KEY = 'rbm_applications';
