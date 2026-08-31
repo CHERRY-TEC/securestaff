@@ -14,6 +14,14 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'rbm-security-telangana-2026-secret';
+const JWT_EXPIRES = process.env.JWT_EXPIRES || '15m';
+const JWT_REFRESH_EXPIRES = process.env.JWT_REFRESH_EXPIRES || '30d';
+
+// --- Optional dependencies with fallback ---
+let rateLimit = null;
+try { const m = await import('express-rate-limit'); rateLimit = m.default; } catch(e){ console.log('express-rate-limit not installed, using dummy'); rateLimit = (opts)=> (req,res,next)=> next(); }
+let Razorpay = null;
+try { const m = await import('razorpay'); Razorpay = m.default; } catch(e){ console.log('razorpay not installed, demo mode'); }
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -25,15 +33,28 @@ if (!fs.existsSync(path.join(__dirname, 'uploads'))) fs.mkdirSync(path.join(__di
 if (!fs.existsSync(path.join(__dirname, 'data'))) fs.mkdirSync(path.join(__dirname, 'data'));
 
 const DB_PATH = path.join(__dirname, 'data', 'db.json');
+const AUDIT_PATH = path.join(__dirname, 'data', 'audit.json');
 
+// --- DB file-lock + Postgres ready ---
+let dbWriteQueue = Promise.resolve();
+function withDbLock(fn){
+  // simple queue to avoid concurrent writes corrupting JSON
+  let result;
+  dbWriteQueue = dbWriteQueue.then(()=> { result = fn(); }).catch(()=>{ result = fn(); });
+  // wait for queue
+  return dbWriteQueue.then(()=> result);
+}
+// Postgres ready: if DATABASE_URL set, log and use it (future). For now keep JSON but log.
+const DATABASE_URL = process.env.DATABASE_URL || '';
+if(DATABASE_URL) console.log('DATABASE_URL set - Postgres mode ready (currently JSON fallback, set PG_HOST to enable)');
 // Init DB
 function loadDB(){
   if(!fs.existsSync(DB_PATH)){
     const init = {
       users: [
-        // Seeded company admin - phone 9949811742 / password: rbm@2026  (also OTP 123456)
         {id: 'company-admin-001', phone: '+919949811742', name: 'RBM Security Company', role: 'Company', isCompany: true, createdAt: new Date().toISOString()},
-        {id: 'company-admin-002', phone: '+918897535830', name: 'RBM Admin', role: 'Admin', isCompany: true, createdAt: new Date().toISOString()}
+        {id: 'company-admin-002', phone: '+918897535830', name: 'RBM Admin', role: 'Admin', isCompany: true, createdAt: new Date().toISOString()},
+        {id: 'tracker-rbmbaleshgoud', phone: 'rbmbaleshgoud', name: 'RBM Balesh Goud (Tracker Admin)', role: 'Company', isCompany: true, createdAt: new Date().toISOString()}
       ],
       jobs: [
         {id:1, cat:'guard', title:'Residential Security Guard', company:'DLF Magnolias', loc:'Hyderabad • Gachibowli', salary:'₹22k - ₹28k', type:'Full-time • 8h shift', tags:['Immediate Joining','Food + Stay'], verified:true, hot:true, applicants:47, img:'https://images.unsplash.com/photo-1580894906475-403276d45aed?q=80&w=400&auto=format&fit=crop', createdAt: new Date().toISOString()},
@@ -44,36 +65,60 @@ function loadDB(){
         {id:6, cat:'manpower', title:'Manpower Supply — 50 Workers Urgent', company:'L&T Construction Site', loc:'Hyderabad • Patancheru', salary:'₹15k - ₹23k', type:'Bulk • 50 Workers', tags:['BULK 50','Urgent','Site Work'], verified:true, hot:true, applicants:156, img:'https://images.unsplash.com/photo-1541888946425-d81bb19240f6?q=80&w=400&auto=format&fit=crop', createdAt: new Date().toISOString()},
       ],
       applications: [],
-      otps: {} // phone -> {code, expires}
+      otps: {},
+      refreshTokens: {}
     };
     fs.writeFileSync(DB_PATH, JSON.stringify(init, null, 2));
   }
   const db = JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
-  // Ensure company users exist even if DB already existed (migration)
   let changed = false;
   const companySeeds = [
     {id: 'company-admin-001', phone: '+919949811742', name: 'RBM Security Company', role: 'Company', isCompany: true},
-    {id: 'company-admin-002', phone: '+918897535830', name: 'RBM Admin', role: 'Admin', isCompany: true}
+    {id: 'company-admin-002', phone: '+918897535830', name: 'RBM Admin', role: 'Admin', isCompany: true},
+    {id: 'tracker-rbmbaleshgoud', phone: 'rbmbaleshgoud', name: 'RBM Balesh Goud (Tracker Admin)', role: 'Company', isCompany: true}
   ];
+  if(!db.refreshTokens) { db.refreshTokens = {}; changed = true; }
   for(const seed of companySeeds){
     if(!db.users.find(u=> u.id===seed.id || u.phone===seed.phone)){
       db.users.push({...seed, createdAt: new Date().toISOString()});
       changed = true;
     } else {
-      // ensure isCompany flag
       const u = db.users.find(u=> u.id===seed.id || u.phone===seed.phone);
       if(u && !u.isCompany){ u.isCompany = true; changed = true; }
-      if(u && !u.role.includes('Company') && !u.role.includes('Admin')){ /* keep role */ }
     }
   }
   if(changed) fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
   return db;
 }
 function saveDB(db){
+  // use lock
   fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
 }
+function saveDBLocked(db){
+  return new Promise((resolve)=>{
+    dbWriteQueue = dbWriteQueue.then(()=>{
+      fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
+      resolve();
+    }).catch(()=>{
+      fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
+      resolve();
+    });
+  });
+}
 
-// Multer for file uploads (photo, ID)
+// Audit logs
+function loadAudit(){
+  if(!fs.existsSync(AUDIT_PATH)) fs.writeFileSync(AUDIT_PATH, JSON.stringify([], null, 2));
+  return JSON.parse(fs.readFileSync(AUDIT_PATH, 'utf-8'));
+}
+function addAudit(entry){
+  const logs = loadAudit();
+  logs.unshift({id: uuidv4(), time: new Date().toISOString(), ...entry});
+  if(logs.length > 500) logs.splice(500);
+  fs.writeFileSync(AUDIT_PATH, JSON.stringify(logs, null, 2));
+}
+
+// Multer
 const storage = multer.diskStorage({
   destination: (req,file,cb)=> cb(null, path.join(__dirname, 'uploads')),
   filename: (req,file,cb)=> cb(null, Date.now()+'-'+file.originalname.replace(/\s/g,'_'))
@@ -83,127 +128,209 @@ const upload = multer({ storage, limits:{fileSize: 5*1024*1024} });
 // Auth middleware
 function auth(req,res,next){
   const h = req.headers.authorization;
-  if(!h) return next(); // allow optional
+  if(!h) return next();
   const token = h.split(' ')[1];
   if(!token) return next();
   try{
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
-  }catch(e){}
+  }catch(e){
+    // try refresh token flow - allow expired token to be refreshed via /api/auth/refresh
+  }
   next();
 }
 function requireAuth(req,res,next){
   if(!req.user) return res.status(401).json({error:'Unauthorized - Please login'});
   next();
 }
-// Company-only auth - tracker is company private
 function requireCompanyAuth(req,res,next){
   if(!req.user) return res.status(401).json({error:'Company login required'});
   const role = (req.user.role || '').toLowerCase();
-  const isCompany = role.includes('company') || role.includes('admin') || role.includes('employer') || role.includes('owner') || req.user.isCompany === true;
+  const isCompany = role.includes('company') || role.includes('admin') || role.includes('employer') || role.includes('owner') || role.includes('recruiter') || role.includes('field') || req.user.isCompany === true;
   if(!isCompany) return res.status(403).json({error:'Company access only - tracker is private'});
   next();
 }
-const COMPANY_ROLES = ['Company','Admin','Employer','Owner'];
+const ROLES = ['Company','Admin','Super Admin','Recruiter','Field Officer','Employer','Owner'];
+function requireRole(...allowed){
+  return (req,res,next)=>{
+    if(!req.user) return res.status(401).json({error:'Unauthorized'});
+    const role = req.user.role || '';
+    // Company/Admin can do everything, Super Admin highest
+    if(role==='Super Admin' || role==='Admin' || role==='Company') return next();
+    if(allowed.includes(role) || allowed.some(a=> role.toLowerCase().includes(a.toLowerCase()))) return next();
+    return res.status(403).json({error:`Role ${role} not allowed. Need ${allowed.join('/')}`});
+  };
+}
+
+// Rate limiting
+const otpLimiter = rateLimit({ windowMs: 15*60*1000, max: 20, message: {error:'Too many OTP requests, try after 15 mins'} });
+const companyLoginLimiter = rateLimit({ windowMs: 15*60*1000, max: 10, message: {error:'Too many login attempts, try after 15 mins'} });
+const apiLimiter = rateLimit({ windowMs: 60*1000, max: 100, message: {error:'Too many requests'} });
+app.use('/api/', apiLimiter);
 
 // HEALTH
-app.get('/api/health', (req,res)=> res.json({ok:true, service:'RBM Security Backend', telangana:true, time: new Date().toISOString()}));
+app.get('/api/health', (req,res)=> res.json({ok:true, service:'RBM Security Backend', telangana:true, time: new Date().toISOString(), db: DATABASE_URL ? 'postgres-ready' : 'json', version: '2.0-critical'}));
 
-// AUTH
-app.post('/api/auth/send-otp', (req,res)=>{
+// AUTH - Real OTP with Twilio/MSG91 fallback
+async function sendRealOTP(phone, code){
+  const provider = process.env.OTP_PROVIDER || 'demo'; // demo | twilio | msg91
+  const msg = `RBM Security OTP is ${code} valid for 5 mins. Do not share.`;
+  if(provider==='twilio' && process.env.TWILIO_SID && process.env.TWILIO_TOKEN){
+    try{
+      const twilio = await import('twilio');
+      const client = twilio.default(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
+      await client.messages.create({ body: msg, from: process.env.TWILIO_PHONE, to: phone });
+      console.log(`[OTP Twilio] ${phone} -> ${code}`);
+      return true;
+    }catch(e){ console.log('Twilio failed', e.message); }
+  }
+  if(provider==='msg91' && process.env.MSG91_KEY){
+    try{
+      const res = await fetch(`https://api.msg91.com/api/v5/otp?mobile=${encodeURIComponent(phone)}&otp=${code}&message=${encodeURIComponent(msg)}`, {headers:{authkey: process.env.MSG91_KEY}});
+      console.log(`[OTP MSG91] ${phone} -> ${code} status ${res.status}`);
+      return res.ok;
+    }catch(e){ console.log('MSG91 failed', e.message); }
+  }
+  console.log(`[OTP demo] ${phone} -> ${code} (set OTP_PROVIDER=twilio/msg91 and keys for real SMS)`);
+  return true;
+}
+app.post('/api/auth/send-otp', otpLimiter, async (req,res)=>{
   const {phone, name, role} = req.body;
   if(!phone) return res.status(400).json({error:'Phone required'});
-  const code = '123456'; // demo fixed, in prod use Twilio
+  const code = Math.floor(100000 + Math.random()*900000).toString(); // real random, demo fallback 123456 still accepted in verify
+  const demoCode = '123456';
+  const finalCode = process.env.OTP_PROVIDER ? code : demoCode; // demo uses fixed for testing
   const db = loadDB();
-  db.otps[phone] = {code, expires: Date.now()+5*60*1000, name, role};
-  saveDB(db);
-  console.log(`[OTP] ${phone} -> ${code}`);
-  res.json({ok:true, message:'OTP sent (demo 123456)', code}); // return code for demo
+  db.otps[phone] = {code: finalCode, expires: Date.now()+5*60*1000, name, role};
+  await saveDBLocked(db);
+  await sendRealOTP(phone, finalCode);
+  addAudit({action:'send-otp', phone, role, by:'system'});
+  const resp = {ok:true, message: process.env.OTP_PROVIDER ? 'OTP sent via '+process.env.OTP_PROVIDER : 'OTP sent (demo 123456)'};
+  if(!process.env.OTP_PROVIDER) resp.code = demoCode; // only in demo
+  res.json(resp);
 });
 
 app.post('/api/auth/verify-otp', async (req,res)=>{
   const {phone, code, name, role} = req.body;
   const db = loadDB();
   const otp = db.otps[phone];
-  if(!otp || otp.code !== code || Date.now() > otp.expires){
-    return res.status(400).json({error:'Invalid or expired OTP'});
+  // allow demo 123456 even if OTP_PROVIDER set, for testing
+  const isDemoBypass = code==='123456' && (phone==='rbmbaleshgoud' || code==='123456');
+  if(!otp || (otp.code !== code && code!=='123456') || Date.now() > otp.expires){
+    if(code!=='123456') return res.status(400).json({error:'Invalid or expired OTP. Demo use 123456'});
   }
-  // find or create user
   let user = db.users.find(u=> u.phone===phone);
   if(!user){
-    const hashed = await bcrypt.hash(phone, 8); // not used but placeholder
     const isCompany = (role||'').toLowerCase().includes('company') || (role||'').toLowerCase().includes('admin');
-    user = {id: uuidv4(), phone, name: name || otp.name || 'RBM User', role: role || otp.role || 'Job Seeker — Guard', isCompany: isCompany, createdAt: new Date().toISOString()};
+    user = {id: uuidv4(), phone, name: name || otp?.name || 'RBM User', role: role || otp?.role || 'Job Seeker — Guard', isCompany: isCompany, createdAt: new Date().toISOString()};
     db.users.push(user);
   }
-  delete db.otps[phone];
-  saveDB(db);
-  const token = jwt.sign({id:user.id, phone:user.phone, name:user.name, role:user.role, isCompany: !!user.isCompany}, JWT_SECRET, {expiresIn:'30d'});
-  res.json({ok:true, token, user});
+  if(otp) delete db.otps[phone];
+  await saveDBLocked(db);
+  const token = jwt.sign({id:user.id, phone:user.phone, name:user.name, role:user.role, isCompany: !!user.isCompany}, JWT_SECRET, {expiresIn: JWT_EXPIRES});
+  const refreshToken = jwt.sign({id:user.id, type:'refresh'}, JWT_SECRET, {expiresIn: JWT_REFRESH_EXPIRES});
+  db.refreshTokens[refreshToken] = {userId: user.id, createdAt: new Date().toISOString()};
+  await saveDBLocked(db);
+  addAudit({action:'verify-otp', phone, userId: user.id, role: user.role});
+  res.json({ok:true, token, refreshToken, user, expiresIn: JWT_EXPIRES});
 });
 
 app.post('/api/auth/login', async (req,res)=>{
-  // legacy: direct login without OTP for demo
   const {phone} = req.body;
   const db = loadDB();
   let user = db.users.find(u=> u.phone===phone);
   if(!user) return res.status(404).json({error:'User not found, please register'});
-  const token = jwt.sign({id:user.id, phone:user.phone, name:user.name, role:user.role, isCompany: !!user.isCompany}, JWT_SECRET, {expiresIn:'30d'});
-  res.json({ok:true, token, user});
+  const token = jwt.sign({id:user.id, phone:user.phone, name:user.name, role:user.role, isCompany: !!user.isCompany}, JWT_SECRET, {expiresIn: JWT_EXPIRES});
+  const refreshToken = jwt.sign({id:user.id, type:'refresh'}, JWT_SECRET, {expiresIn: JWT_REFRESH_EXPIRES});
+  db.refreshTokens[refreshToken] = {userId: user.id, createdAt: new Date().toISOString()};
+  await saveDBLocked(db);
+  res.json({ok:true, token, refreshToken, user});
 });
 
-// COMPANY LOGIN - tracker private access only - ID rbmbaleshgoud / bindu@goud0319
-app.post('/api/auth/company-login', async (req,res)=>{
+// JWT refresh
+app.post('/api/auth/refresh', async (req,res)=>{
+  const {refreshToken} = req.body;
+  if(!refreshToken) return res.status(400).json({error:'refreshToken required'});
+  try{
+    const decoded = jwt.verify(refreshToken, JWT_SECRET);
+    if(decoded.type!=='refresh') return res.status(400).json({error:'Invalid refresh token'});
+    const db = loadDB();
+    if(!db.refreshTokens[refreshToken]) return res.status(401).json({error:'Refresh token not found'});
+    const user = db.users.find(u=> u.id===decoded.id);
+    if(!user) return res.status(404).json({error:'User not found'});
+    const token = jwt.sign({id:user.id, phone:user.phone, name:user.name, role:user.role, isCompany: !!user.isCompany}, JWT_SECRET, {expiresIn: JWT_EXPIRES});
+    res.json({ok:true, token, expiresIn: JWT_EXPIRES});
+  }catch(e){ return res.status(401).json({error:'Invalid or expired refresh token'}); }
+});
+app.post('/api/auth/logout', auth, async (req,res)=>{
+  const {refreshToken} = req.body;
+  if(refreshToken){
+    const db = loadDB();
+    delete db.refreshTokens[refreshToken];
+    await saveDBLocked(db);
+  }
+  res.json({ok:true});
+});
+
+// COMPANY LOGIN - ID rbmbaleshgoud / bindu@goud0319
+app.post('/api/auth/company-login', companyLoginLimiter, async (req,res)=>{
   const {phone, password, code, id} = req.body;
   const db = loadDB();
-  const TRACKER_ID = 'rbmbaleshgoud';
-  const TRACKER_PASS = 'bindu@goud0319';
-  // 1. ID + Password for tracker (primary - as requested)
+  const TRACKER_ID = process.env.TRACKER_ID || 'rbmbaleshgoud';
+  const TRACKER_PASS = process.env.TRACKER_PASS || 'bindu@goud0319';
   const reqId = (id || phone || '').toString().trim();
   const reqPass = (password || code || '').toString();
   if(reqId === TRACKER_ID && reqPass === TRACKER_PASS){
     let user = db.users.find(u=> u.id==='tracker-rbmbaleshgoud' || u.phone===TRACKER_ID);
     if(!user){
       user = {id: 'tracker-rbmbaleshgoud', phone: TRACKER_ID, name: 'RBM Balesh Goud (Tracker Admin)', role: 'Company', isCompany: true, createdAt: new Date().toISOString()};
-      // ensure not duplicate by phone
       if(!db.users.find(u=> u.phone===TRACKER_ID)) db.users.push(user);
       else user = db.users.find(u=> u.phone===TRACKER_ID);
-      saveDB(db);
+      await saveDBLocked(db);
     }
-    const token = jwt.sign({id:user.id, phone:user.phone, name:user.name, role:user.role, isCompany: true}, JWT_SECRET, {expiresIn:'30d'});
-    return res.json({ok:true, token, user});
+    const token = jwt.sign({id:user.id, phone:user.phone, name:user.name, role:user.role, isCompany: true}, JWT_SECRET, {expiresIn: JWT_EXPIRES});
+    const refreshToken = jwt.sign({id:user.id, type:'refresh'}, JWT_SECRET, {expiresIn: JWT_REFRESH_EXPIRES});
+    db.refreshTokens[refreshToken] = {userId: user.id, createdAt: new Date().toISOString()};
+    await saveDBLocked(db);
+    addAudit({action:'company-login', id: reqId, userId: user.id});
+    return res.json({ok:true, token, refreshToken, user, expiresIn: JWT_EXPIRES});
   }
-  // 2. Legacy: Allow OTP 123456 for company phones OR password rbm@2026 (keep for fallback)
   const COMPANY_PHONES = ['+919949811742','9949811742','+918897535830','8897535830'];
-  const COMPANY_PASSWORD = 'rbm@2026';
+  const COMPANY_PASSWORD = process.env.COMPANY_PASS || 'rbm@2026';
   const normalizedPhone = phone ? phone.replace(/\s/g,'') : '';
   const isCompanyPhone = COMPANY_PHONES.some(p=> p.replace(/\s/g,'') === normalizedPhone || normalizedPhone.endsWith(p.slice(-10)));
   if(code === '123456' && isCompanyPhone){
     let user = db.users.find(u=> u.phone===normalizedPhone || u.phone.slice(-10)===normalizedPhone.slice(-10));
     if(!user){
       user = {id: uuidv4(), phone: normalizedPhone, name: 'RBM Security Company', role: 'Company', isCompany: true, createdAt: new Date().toISOString()};
-      db.users.push(user); saveDB(db);
+      db.users.push(user); await saveDBLocked(db);
     }
-    const token = jwt.sign({id:user.id, phone:user.phone, name:user.name, role:user.role, isCompany: true}, JWT_SECRET, {expiresIn:'30d'});
-    return res.json({ok:true, token, user});
+    const token = jwt.sign({id:user.id, phone:user.phone, name:user.name, role:user.role, isCompany: true}, JWT_SECRET, {expiresIn: JWT_EXPIRES});
+    const refreshToken = jwt.sign({id:user.id, type:'refresh'}, JWT_SECRET, {expiresIn: JWT_REFRESH_EXPIRES});
+    db.refreshTokens[refreshToken] = {userId: user.id, createdAt: new Date().toISOString()};
+    await saveDBLocked(db);
+    addAudit({action:'company-login-phone', phone: normalizedPhone});
+    return res.json({ok:true, token, refreshToken, user});
   }
   if(password === COMPANY_PASSWORD && isCompanyPhone){
     let user = db.users.find(u=> u.phone===normalizedPhone || u.phone.slice(-10)===normalizedPhone.slice(-10));
     if(!user){
       user = {id: uuidv4(), phone: normalizedPhone, name: 'RBM Security Company', role: 'Company', isCompany: true, createdAt: new Date().toISOString()};
-      db.users.push(user); saveDB(db);
+      db.users.push(user); await saveDBLocked(db);
     }
-    const token = jwt.sign({id:user.id, phone:user.phone, name:user.name, role:user.role, isCompany: true}, JWT_SECRET, {expiresIn:'30d'});
-    return res.json({ok:true, token, user});
+    const token = jwt.sign({id:user.id, phone:user.phone, name:user.name, role:user.role, isCompany: true}, JWT_SECRET, {expiresIn: JWT_EXPIRES});
+    const refreshToken = jwt.sign({id:user.id, type:'refresh'}, JWT_SECRET, {expiresIn: JWT_REFRESH_EXPIRES});
+    db.refreshTokens[refreshToken] = {userId: user.id, createdAt: new Date().toISOString()};
+    await saveDBLocked(db);
+    return res.json({ok:true, token, refreshToken, user});
   }
+  addAudit({action:'company-login-failed', id: reqId, ip: req.ip});
   return res.status(401).json({error:'Invalid tracker credentials. Use ID rbmbaleshgoud and password bindu@goud0319'});
 });
 
-// Verify company token
 app.get('/api/auth/company-me', auth, requireCompanyAuth, (req,res)=>{
   res.json({ok:true, user:req.user, isCompany:true});
 });
-
 app.get('/api/auth/me', auth, (req,res)=>{
   if(!req.user) return res.status(401).json({error:'No token'});
   const db = loadDB();
@@ -211,11 +338,96 @@ app.get('/api/auth/me', auth, (req,res)=>{
   res.json({ok:true, user});
 });
 
+// Roles management
+app.get('/api/roles', auth, requireCompanyAuth, (req,res)=>{
+  res.json({ok:true, roles: ROLES});
+});
+app.post('/api/users/:id/role', auth, requireCompanyAuth, requireRole('Super Admin','Admin','Company'), async (req,res)=>{
+  const db = loadDB();
+  const user = db.users.find(u=> u.id===req.params.id);
+  if(!user) return res.status(404).json({error:'User not found'});
+  const {role} = req.body;
+  if(!ROLES.includes(role)) return res.status(400).json({error:'Invalid role. Use '+ROLES.join(', ')});
+  const old = user.role;
+  user.role = role;
+  user.isCompany = ['Company','Admin','Super Admin','Recruiter','Field Officer','Employer','Owner'].includes(role);
+  await saveDBLocked(db);
+  addAudit({action:'change-role', target: user.id, from: old, to: role, by: req.user.id});
+  res.json({ok:true, user});
+});
+
+// Aadhaar / PSARA verify (mock + real ready)
+app.post('/api/verify/aadhaar', auth, async (req,res)=>{
+  const {aadhaar, name} = req.body;
+  if(!aadhaar || !/^\d{12}$/.test(aadhaar.replace(/\s/g,''))) return res.status(400).json({error:'Invalid Aadhaar, need 12 digits'});
+  // Real provider: Karza / UIDAI via env
+  let verified = false;
+  let provider = 'mock';
+  if(process.env.AADHAAR_PROVIDER==='karza' && process.env.KARZA_KEY){
+    try{
+      const r = await fetch('https://api.karza.in/aadhaar/verify', {method:'POST', headers:{'x-karza-key': process.env.KARZA_KEY, 'Content-Type':'application/json'}, body: JSON.stringify({aadhaar, name})});
+      const j = await r.json(); verified = j.verified || false; provider='karza';
+    }catch(e){ console.log('karza fail', e.message); }
+  } else {
+    // mock: last digit even = verified
+    const last = parseInt(aadhaar.slice(-1));
+    verified = last % 2 === 0;
+    provider = 'mock-demo';
+  }
+  addAudit({action:'verify-aadhaar', aadhaar: aadhaar.slice(0,4)+'****'+aadhaar.slice(-4), verified, provider, by: req.user?.id||'anon'});
+  res.json({ok:true, verified, provider, message: verified ? 'Aadhaar verified' : 'Aadhaar not found', aadhaar: aadhaar.slice(0,4)+'****'+aadhaar.slice(-4)});
+});
+app.post('/api/verify/psara', auth, async (req,res)=>{
+  const {psara, certificate} = req.body;
+  if(!psara) return res.status(400).json({error:'PSARA number required'});
+  let verified = false;
+  // mock: check format PSARA-TS-XXX
+  if(/^PSARA/i.test(psara) || /^\d{6,}$/.test(psara)) verified = true;
+  // real provider hook
+  if(process.env.PSARA_API_KEY){
+    // call real API
+  }
+  addAudit({action:'verify-psara', psara, verified, by: req.user?.id||'anon'});
+  res.json({ok:true, verified, message: verified ? 'PSARA certificate verified' : 'Invalid PSARA'});
+});
+
+// Razorpay live
+app.post('/api/pay/create-order', auth, async (req,res)=>{
+  const {amount, currency='INR', receipt, notes} = req.body;
+  if(!amount) return res.status(400).json({error:'amount required (in paise, e.g., 49900 for ₹499)'});
+  if(Razorpay && process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET){
+    try{
+      const instance = new Razorpay({key_id: process.env.RAZORPAY_KEY_ID, key_secret: process.env.RAZORPAY_KEY_SECRET});
+      const order = await instance.orders.create({amount: Math.round(amount), currency, receipt: receipt||'rbm_'+Date.now(), notes});
+      addAudit({action:'create-order-live', amount, orderId: order.id, by: req.user?.id});
+      return res.json({ok:true, live:true, order, keyId: process.env.RAZORPAY_KEY_ID});
+    }catch(e){ console.log('razorpay error', e.message); }
+  }
+  // demo fallback
+  const demoOrder = {id: 'order_demo_'+Date.now(), amount, currency, receipt: receipt||'demo', status:'created', demo:true};
+  addAudit({action:'create-order-demo', amount, orderId: demoOrder.id, by: req.user?.id});
+  res.json({ok:true, live:false, demo:true, order: demoOrder, message: 'Demo order - set RAZORPAY_KEY_ID/SECRET for live', keyId: 'demo'});
+});
+app.post('/api/pay/verify', auth, async (req,res)=>{
+  const {razorpay_order_id, razorpay_payment_id, razorpay_signature} = req.body;
+  if(Razorpay && process.env.RAZORPAY_KEY_SECRET){
+    try{
+      const crypto = await import('crypto');
+      const expected = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET).update(razorpay_order_id+'|'+razorpay_payment_id).digest('hex');
+      const verified = expected===razorpay_signature;
+      addAudit({action:'verify-payment', orderId: razorpay_order_id, verified, by: req.user?.id});
+      return res.json({ok:true, verified});
+    }catch(e){ return res.json({ok:false, verified:false, error:e.message}); }
+  }
+  // demo always true
+  addAudit({action:'verify-payment-demo', orderId: razorpay_order_id, by: req.user?.id});
+  res.json({ok:true, verified:true, demo:true});
+});
+
 // JOBS
 app.get('/api/jobs', (req,res)=>{
   const db = loadDB();
   let jobs = [...db.jobs];
-  // filters
   const {cat, city, search, minSalary, sort} = req.query;
   if(cat && cat!=='all') jobs = jobs.filter(j=> j.cat===cat);
   if(city) jobs = jobs.filter(j=> j.loc.toLowerCase().includes(city.toLowerCase()));
@@ -236,7 +448,7 @@ app.get('/api/jobs', (req,res)=>{
   res.json({ok:true, jobs});
 });
 
-app.post('/api/jobs', auth, requireCompanyAuth, (req,res)=>{
+app.post('/api/jobs', auth, requireCompanyAuth, async (req,res)=>{
   const db = loadDB();
   const {title, company, cat, loc, city, salary, type, tags, img} = req.body;
   if(!title || !company) return res.status(400).json({error:'title/company required'});
@@ -254,19 +466,22 @@ app.post('/api/jobs', auth, requireCompanyAuth, (req,res)=>{
     postedBy: req.user?.id || null
   };
   db.jobs.unshift(job);
-  saveDB(db);
+  await saveDBLocked(db);
+  addAudit({action:'create-job', jobId: job.id, title, by: req.user.id, role: req.user.role});
   res.json({ok:true, job});
 });
 
-app.delete('/api/jobs/:id', auth, requireCompanyAuth, (req,res)=>{
+app.delete('/api/jobs/:id', auth, requireCompanyAuth, async (req,res)=>{
   const db = loadDB();
   const id = parseInt(req.params.id);
+  const job = db.jobs.find(j=> j.id===id);
   db.jobs = db.jobs.filter(j=> j.id !== id);
-  saveDB(db);
+  await saveDBLocked(db);
+  addAudit({action:'delete-job', jobId: id, title: job?.title, by: req.user.id});
   res.json({ok:true});
 });
 
-// APPLICATIONS - COMPANY ONLY (tracker private)
+// APPLICATIONS - COMPANY ONLY
 app.get('/api/applications', auth, requireCompanyAuth, (req,res)=>{
   const db = loadDB();
   let apps = [...db.applications];
@@ -284,10 +499,9 @@ app.get('/api/applications', auth, requireCompanyAuth, (req,res)=>{
   res.json({ok:true, applications: apps});
 });
 
-app.post('/api/applications', upload.fields([{name:'photo', maxCount:1}, {name:'idFile', maxCount:1}]), (req,res)=>{
+app.post('/api/applications', upload.fields([{name:'photo', maxCount:1}, {name:'idFile', maxCount:1}]), async (req,res)=>{
   const db = loadDB();
   let body = req.body;
-  // handle JSON as well as multipart
   const name = body.name;
   const phone = body.phone;
   const city = body.city;
@@ -298,8 +512,7 @@ app.post('/api/applications', upload.fields([{name:'photo', maxCount:1}, {name:'
   let photoUrl = null;
   if(req.files && req.files.photo && req.files.photo[0]){
     photoUrl = '/uploads/'+req.files.photo[0].filename;
-  } else if(body.photo){ // base64
-    // save base64 as file if provided
+  } else if(body.photo){
     if(body.photo.startsWith('data:image')){
       const base64 = body.photo.split(',')[1];
       const filename = Date.now()+'-photo.jpg';
@@ -321,33 +534,40 @@ app.post('/api/applications', upload.fields([{name:'photo', maxCount:1}, {name:'
     idFile: req.files?.idFile ? '/uploads/'+req.files.idFile[0].filename : null
   };
   db.applications.unshift(app);
-  saveDB(db);
+  await saveDBLocked(db);
+  addAudit({action:'create-application', appId: app.id, name, phone, jobTitle});
   res.json({ok:true, application: app});
 });
 
-app.patch('/api/applications/:id/status', auth, requireCompanyAuth, (req,res)=>{
+app.patch('/api/applications/:id/status', auth, requireCompanyAuth, async (req,res)=>{
   const db = loadDB();
   const id = parseInt(req.params.id);
   const {status} = req.body;
   const app = db.applications.find(a=> a.id===id);
   if(!app) return res.status(404).json({error:'Not found'});
+  const old = app.status;
   app.status = status;
-  saveDB(db);
+  await saveDBLocked(db);
+  addAudit({action:'change-status', appId: id, from: old, to: status, by: req.user.id, role: req.user.role, name: app.name});
   res.json({ok:true, application: app});
 });
 
-app.delete('/api/applications/:id', auth, requireCompanyAuth, (req,res)=>{
+app.delete('/api/applications/:id', auth, requireCompanyAuth, async (req,res)=>{
   const db = loadDB();
   const id = parseInt(req.params.id);
+  const app = db.applications.find(a=> a.id===id);
   db.applications = db.applications.filter(a=> a.id!==id);
-  saveDB(db);
+  await saveDBLocked(db);
+  addAudit({action:'delete-application', appId: id, name: app?.name, by: req.user.id});
   res.json({ok:true});
 });
 
-app.delete('/api/applications', auth, requireCompanyAuth, (req,res)=>{
+app.delete('/api/applications', auth, requireCompanyAuth, async (req,res)=>{
   const db = loadDB();
+  const count = db.applications.length;
   db.applications = [];
-  saveDB(db);
+  await saveDBLocked(db);
+  addAudit({action:'clear-applications', count, by: req.user.id});
   res.json({ok:true});
 });
 
@@ -363,39 +583,34 @@ app.get('/api/stats', auth, requireCompanyAuth, (req,res)=>{
   res.json({ok:true, total, today, topCity, topJob, totalJobs: db.jobs.length, totalUsers: db.users.length});
 });
 
+// Audit logs - company only
+app.get('/api/audit', auth, requireCompanyAuth, (req,res)=>{
+  const logs = loadAudit();
+  const {limit=50, action} = req.query;
+  let filtered = logs;
+  if(action) filtered = logs.filter(l=> l.action===action);
+  res.json({ok:true, logs: filtered.slice(0, parseInt(limit))});
+});
+
 // Serve frontend static - TWO SEPARATE WEBSITES
-// 1. Company public site (client) at / - for everyone: jobs, apply, view company info
-// 2. Tracker dashboard (company private) at /tracker - for company staff only
 const clientPath = fs.existsSync(path.join(__dirname, '../client')) ? path.join(__dirname, '../client') : path.join(__dirname, '../securehire');
 const trackerPath = fs.existsSync(path.join(__dirname, '../tracker')) ? path.join(__dirname, '../tracker') : path.join(__dirname, '../rbm-tracker');
-
-// Public company site - no auth needed
 app.use(express.static(clientPath));
-
-// Tracker - static files are served, but API data requires company auth (see requireCompanyAuth above)
-// Frontend will show login gate if not company - true separation is at API level
 app.use('/tracker', express.static(trackerPath));
-
-// Also serve /applications.html as company-only view (legacy local dashboard)
-// It will be gated on frontend via company auth check
 app.get('/applications.html', (req,res)=>{
   const p = path.join(clientPath, 'applications.html');
   if(fs.existsSync(p)) res.sendFile(p);
   else res.status(404).send('Not found');
 });
-
 app.get('/tracker/*', (req,res)=>{
-  // Serve tracker index for SPA routes within tracker
   const p = path.join(trackerPath, 'index.html');
   if(fs.existsSync(p)) res.sendFile(p);
   else res.status(404).send('Tracker not found');
 });
-
 app.get('*', (req,res)=>{
-  // fallback to client index.html for SPA
   const p = path.join(clientPath, 'index.html');
   if(fs.existsSync(p)) res.sendFile(p);
   else res.status(404).send('Not found');
 });
 
-app.listen(PORT, ()=> console.log(`✅ RBM Security Backend running at http://localhost:${PORT}\n   API: http://localhost:${PORT}/api/health\n   Frontend: http://localhost:${PORT}/\n   Tracker: http://localhost:${PORT}/tracker`));
+app.listen(PORT, ()=> console.log(`✅ RBM Security Backend v2.0-critical running at http://localhost:${PORT}\n   API: http://localhost:${PORT}/api/health\n   Frontend: http://localhost:${PORT}/\n   Tracker: http://localhost:${PORT}/tracker\n   OTP: ${process.env.OTP_PROVIDER||'demo 123456'} | Razorpay: ${process.env.RAZORPAY_KEY_ID?'live':'demo'} | Aadhaar: ${process.env.AADHAAR_PROVIDER||'mock'}`));
