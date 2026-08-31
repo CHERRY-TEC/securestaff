@@ -64,6 +64,29 @@ body{
 .stat-card:hover{transform:translateY(-4px);border-color:rgba(255,184,0,0.2);box-shadow:0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,184,0,0.08)}
 /* Company gate - tracker private */
 #companyLoginGate{backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%)}
+/* ===== PHONE SMOOTHNESS OPTIMIZATIONS ===== */
+@media(max-width:768px){
+  /* Prevent iOS auto-zoom on input/select focus */
+  input, select, textarea, button{font-size:16px !important}
+  *{-webkit-tap-highlight-color:transparent}
+  /* Native momentum scroll for smoothness */
+  html{scroll-behavior:auto}
+  body{-webkit-overflow-scrolling:touch; overscroll-behavior-y:contain}
+  /* Lighten heavy blur for GPU smoothness on phones */
+  .glass,.glass-strong,.glass-subtle{backdrop-filter:blur(8px) saturate(140%);-webkit-backdrop-filter:blur(8px) saturate(140%)}
+  /* Slower, lighter orb animation on mobile */
+  .orb-a,.orb-b,.orb-c{animation-duration:22s;opacity:0.07}
+  /* Finger-friendly touch targets (not the small icon buttons) */
+  button.btn-primary, button.btn-ghost, button[type="submit"], a.btn-primary, a.btn-ghost{min-height:46px}
+  /* Small square icon buttons stay compact */
+  button.w-8, button.w-9{min-height:0}
+  /* Table: ensure thumbs-friendly horizontal scroll */
+  .overflow-x-auto{-webkit-overflow-scrolling:touch}
+  /* Login gate fits small screens */
+  #companyLoginGate .max-w-\[420px\]{max-width:92vw}
+  /* Stats stack 2x2 on smallest screens already; tighten gaps */
+  .max-w-\[1280px\] .grid{gap:0.6rem}
+}
 </style>
 </head>
 <body class="font-outfit antialiased">

@@ -89,6 +89,34 @@ body{background:#070A14;color:white;overflow-x:hidden}
   #guardLightbox .max-w-\[720px\]{max-width:92vw}
   #guardLightboxImg{max-height:62vh;max-height:62dvh;width:92vw;object-fit:contain}
 }
+/* ===== PHONE SMOOTHNESS OPTIMIZATIONS ===== */
+/* Prevent iOS auto-zoom on input/select focus (needs >=16px font) */
+@media(max-width:768px){
+  input, select, textarea, button{font-size:16px !important}
+  /* Disable tap highlight flash on iOS/Android */
+  *{-webkit-tap-highlight-color:transparent}
+  /* Smooth momentum scrolling */
+  html{scroll-behavior:auto}
+  body{-webkit-overflow-scrolling:touch; overscroll-behavior-y:contain}
+  /* Reduce heavy fullscreen blur/backdrop for GPU smoothness */
+  .glass,.glass-strong{backdrop-filter:blur(8px) saturate(140%);-webkit-backdrop-filter:blur(8px) saturate(140%)}
+  /* Reduce CSS orb animation stress on low-end phones */
+  .orb-a,.orb-b,.orb-c{animation-duration:20s}
+  /* Force mobile menu / nav click targets finger-friendly */
+  #mobileMenu a{min-height:48px;display:flex;align-items:center;font-size:16px}
+  #navbar a.btn-primary,#navbar a.btn-ghost{min-height:46px;display:inline-flex;align-items:center}
+  #navbar button.w-10{min-height:44px}
+  /* Optimize loader for low memory phones */
+  #logoVideo{width:100vw;height:100dvh;object-fit:cover}
+  .hide-on-mobile{display:none !important}
+}
+/* Disable heavy shimmer/kenburns on mobile for battery + smoothness */
+@media(max-width:768px){
+  .kenburns,.hero-gradient-shift{animation:none !important}
+  .float-slow{animation:none !important}
+  /* Anchor links must not hide under the fixed nav */
+  section[id], div[id]{scroll-margin-top:84px}
+}
 .ring,.ring2{display:none}
 .shield-wrap{position:relative;width:140px;height:160px;display:flex;align-items:center;justify-content:center}
 .shield-svg{width:120px;height:140px;filter:drop-shadow(0 0 30px rgba(255,184,0,0.45))}
@@ -2458,12 +2486,17 @@ function prevGuard(){ currentGuard = (currentGuard-1+guardImages.length)%guardIm
 
 // === NEW ANIMATIONS ===
 (function(){
-  // Lenis smooth scroll
-  try{
-    const lenis = new Lenis({ duration:1.1, easing:(t)=> Math.min(1,1.001-Math.pow(2,-10*t)) });
-    function raf(time){ lenis.raf(time); requestAnimationFrame(raf); }
-    requestAnimationFrame(raf);
-  }catch(e){}
+  // Heavy animations disabled on phones for smooth scrolling (use native scroll on mobile)
+  const _mobileAnim = typeof isPhoneFS !== 'undefined' ? isPhoneFS : (window.innerWidth < 768);
+
+  // Lenis smooth scroll — desktop only, mobile uses native (smoother)
+  if(!_mobileAnim){
+    try{
+      const lenis = new Lenis({ duration:1.1, easing:(t)=> Math.min(1,1.001-Math.pow(2,-10*t)) });
+      function raf(time){ lenis.raf(time); requestAnimationFrame(raf); }
+      requestAnimationFrame(raf);
+    }catch(e){}
+  }
 
   // Scroll progress top
   const prog = document.getElementById('scrollProgress');
@@ -2485,7 +2518,8 @@ function prevGuard(){ currentGuard = (currentGuard-1+guardImages.length)%guardIm
     // hero stats counters already with initCounters, but also gsap fade for hero left
     gsap.from("#hero .glass", { y:20, opacity:0, duration:0.8, stagger:0.1, ease:"power2.out", delay:0.9 });
 
-    // hero tilt
+    // hero tilt + magnetic buttons — desktop only (these are mouse effects)
+    if(!_mobileAnim){
     const tilt = document.getElementById('heroTiltCard');
     const visual = document.getElementById('heroVisual');
     if(tilt && visual){
@@ -2509,7 +2543,12 @@ function prevGuard(){ currentGuard = (currentGuard-1+guardImages.length)%guardIm
       });
       btn.addEventListener('mouseleave', ()=> gsap.to(btn, { x:0, y:0, duration:0.5, ease:"elastic.out(1,0.4)"}));
     });
+    }
 
+    // Scroll-driven animations — desktop only (mobile uses native scroll, set elements visible)
+    if(_mobileAnim){
+      gsap.utils.toArray(".reveal, .job-card, #categories .group, #guards-gallery .group").forEach(el=>{ if(el) el.style.opacity = 1; el.style.transform='none'; });
+    } else {
     // Job cards stagger on scroll
     ScrollTrigger.batch(".job-card", {
       onEnter: batch => gsap.fromTo(batch, {y:24, opacity:0, scale:0.96}, {y:0, opacity:1, scale:1, duration:0.6, stagger:0.07, ease:"power2.out", overwrite:true}),
@@ -2534,13 +2573,14 @@ function prevGuard(){ currentGuard = (currentGuard-1+guardImages.length)%guardIm
     gsap.utils.toArray(".reveal").forEach(el=>{
       gsap.fromTo(el, {y:22, opacity:0}, {y:0, opacity:1, duration:0.7, ease:"power2.out", scrollTrigger:{trigger:el, start:"top 88%"}});
     });
+    }
 
   }catch(e){ console.log("gsap error", e); }
 
-  // Particles
+  // Particles — fewer on mobile for smoothness
   const pCont = document.getElementById('heroParticles');
   if(pCont){
-    const n = 14;
+    const n = _mobileAnim ? 4 : 14;
     for(let i=0;i<n;i++){
       const d = document.createElement('div');
       d.className='particle';
@@ -2553,9 +2593,9 @@ function prevGuard(){ currentGuard = (currentGuard-1+guardImages.length)%guardIm
     }
   }
 
-  // Counter parallax on scroll for jobGrid
+  // Counter parallax on scroll for jobGrid — desktop only
   try{
-    gsap.to("#heroVisual", { y: -18, scrollTrigger:{trigger:"#hero", start:"top top", end:"bottom top", scrub:0.8 }});
+    if(!_mobileAnim) gsap.to("#heroVisual", { y: -18, scrollTrigger:{trigger:"#hero", start:"top top", end:"bottom top", scrub:0.8 }});
   }catch(e){}
 })();
 
