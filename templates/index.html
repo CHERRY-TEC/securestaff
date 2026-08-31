@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>SecureStaff</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background: #0d1117; color: #fff; }
+        .center { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .box { text-align: center; }
+        h1 { font-size: 52px; margin-bottom: 10px; }
+        p { font-size: 18px; color: #888; margin-bottom: 40px; }
+        .btn { display: inline-block; padding: 16px 40px; margin: 12px; border-radius: 8px; text-decoration: none; font-size: 20px; font-weight: bold; }
+        .company { background: #e94560; color: #fff; }
+        .company:hover { background: #c0392b; }
+        .client { background: #0f3460; color: #fff; }
+        .client:hover { background: #1a5276; }
+    </style>
+</head>
+<body>
+    <div class="center">
+        <div class="box">
+            <h1>SecureStaff</h1>
+            <p>Security Staffing Platform</p>
+            <a class="btn company" href="{{ url_for('main.company_home') }}">Company Portal</a>
+            <a class="btn client" href="{{ url_for('main.client_home') }}">Client Portal</a>
+        </div>
+    </div>
+</body>
+</html>

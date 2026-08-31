@@ -62,41 +62,9 @@ body{
 .table-glass tbody tr:hover{background:rgba(255,255,255,0.05);backdrop-filter:blur(8px);transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,0,0,0.2)}
 .stat-card{transition:all 0.3s}
 .stat-card:hover{transform:translateY(-4px);border-color:rgba(255,184,0,0.2);box-shadow:0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,184,0,0.08)}
-/* Company gate - tracker private */
-#companyLoginGate{backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%)}
 </style>
 </head>
 <body class="font-outfit antialiased">
-<!-- COMPANY LOGIN GATE - Tracker is company-only, separate from public site -->
-<div id="companyLoginGate" class="fixed inset-0 z-[100] bg-[#070A14]/95 flex items-center justify-center p-4">
-  <div class="glass-strong rounded-[24px] max-w-[420px] w-full p-6 md:p-8 relative overflow-hidden">
-    <div class="absolute -top-10 -right-10 w-32 h-32 bg-amber/10 blur-[30px] rounded-full"></div>
-    <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-cyan/10 blur-[30px] rounded-full"></div>
-    <div class="relative">
-      <div class="text-center">
-        <div class="w-14 h-14 rounded-2xl bg-amber flex items-center justify-center mx-auto text-ink"><i class="fa-solid fa-building-shield text-xl"></i></div>
-        <h2 class="font-space font-bold text-[22px] mt-4">Company Access Only</h2>
-        <p class="text-sm text-white/60 mt-1">Tracker dashboard is private — for RBM Security staff only.<br>Public site is <a href="/" onclick="if(location.protocol==='file:'){location.href='../client/index.html';return false;}" class="text-amber underline">rbmsecurity.in</a></p>
-        <div class="inline-flex items-center gap-2 mt-3 bg-amber/10 border border-amber/20 rounded-full px-3 py-1 text-xs"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Two separate websites: Company (public) + Tracker (private)</div>
-      </div>
-      <form onsubmit="handleCompanyLogin(event)" class="mt-6 space-y-3">
-        <div>
-          <label class="text-xs font-bold tracking-widest text-white/60">TRACKER ID</label>
-          <input id="companyPhone" required type="text" placeholder="Enter tracker ID" value="rbmbaleshgoud" class="w-full mt-1.5 glass rounded-xl px-4 py-3 text-sm placeholder:text-white/30 focus:outline-none focus:border-amber/50">
-          <div class="text-[11px] text-white/40 mt-1">Only this ID can open tracker</div>
-        </div>
-        <div>
-          <label class="text-xs font-bold tracking-widest text-white/60">PASSWORD</label>
-          <input id="companyCode" required type="password" placeholder="Enter password" value="" class="w-full mt-1.5 glass rounded-xl px-4 py-3 text-sm placeholder:text-white/30 focus:outline-none focus:border-amber/50">
-          <div class="text-[11px] text-white/40 mt-1">Enter the password you set</div>
-        </div>
-        <div id="companyLoginError" class="hidden glass rounded-xl px-3 py-2 text-xs text-red-400 border-red-500/20 bg-red-500/10"></div>
-        <button type="submit" id="companyLoginBtn" class="w-full btn-primary rounded-full py-3.5 font-bold flex items-center justify-center gap-2"><i class="fa-solid fa-lock"></i> Unlock Tracker</button>
-        <div class="text-center text-xs text-white/30 mt-3">Public? Go to <a href="/" onclick="if(location.protocol==='file:'){location.href='../client/index.html';return false;}" class="text-amber underline">Company Website</a> • Job seekers apply there</div>
-      </form>
-    </div>
-  </div>
-</div>
 <div class="orb orb-a"></div>
 <div class="orb orb-b"></div>
 <div class="orb orb-c"></div>
@@ -112,79 +80,13 @@ body{
       <span class="hidden md:inline-flex ml-2 bg-amber text-ink text-xs font-bold px-3 py-1 rounded-full" id="totalBadge">0 Applications</span>
     </div>
     <div class="flex items-center gap-2">
-      <span id="companyBadge" class="hidden md:inline-flex glass rounded-full px-3 py-1.5 text-xs font-bold items-center gap-1.5"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> <span id="companyBadgeText">Company</span></span>
-      <a href="/" onclick="if(location.protocol==='file:'){location.href='../client/index.html';return false;}" class="btn-ghost rounded-full px-4 py-2 text-sm font-semibold hidden md:inline-flex"><i class="fa-solid fa-arrow-left mr-2"></i>Company Site</a>
-      <a href="/" onclick="if(location.protocol==='file:'){location.href='../client/index.html';return false;}" class="w-9 h-9 rounded-full glass flex items-center justify-center md:hidden"><i class="fa-solid fa-house text-sm"></i></a>
+      <a href="../securehire/index.html" class="btn-ghost rounded-full px-4 py-2 text-sm font-semibold hidden md:inline-flex"><i class="fa-solid fa-arrow-left mr-2"></i>Back to Website</a>
+      <a href="../securehire/index.html" class="w-9 h-9 rounded-full glass flex items-center justify-center md:hidden"><i class="fa-solid fa-house text-sm"></i></a>
       <button onclick="exportCSV()" class="btn-primary rounded-full px-4 py-2 text-sm hidden md:inline-flex"><i class="fa-solid fa-download mr-2"></i>Export CSV</button>
-      <button onclick="companyLogout()" class="btn-ghost rounded-full px-3 py-2 text-sm hidden md:inline-flex" title="Logout company"><i class="fa-solid fa-right-from-bracket mr-1"></i>Logout</button>
       <button onclick="clearAll()" class="w-9 h-9 rounded-full bg-red-500/20 border border-red-500/30 text-red-400 flex items-center justify-center hover:bg-red-500 hover:text-white transition" title="Clear All"><i class="fa-solid fa-trash text-xs"></i></button>
     </div>
   </div>
 </nav>
-
-<!-- OTP SINGLE NUMBER SETTINGS - changeable inside website -->
-<div class="max-w-[1280px] mx-auto px-4 md:px-6 pt-4">
-  <div class="glass rounded-2xl p-4 flex flex-wrap gap-3 items-center">
-    <div class="flex items-center gap-2">
-      <div class="w-9 h-9 rounded-xl bg-amber/20 border border-amber/30 flex items-center justify-center text-amber"><i class="fa-solid fa-mobile-screen"></i></div>
-      <div>
-        <div class="font-bold text-sm">OTP Number Settings</div>
-        <div class="text-xs text-white/50">All OTPs go to this one number (random every time). Change it here without redeploy.</div>
-      </div>
-    </div>
-    <div class="flex-1 min-w-[200px] flex gap-2">
-      <input id="otpSingleInput" type="tel" placeholder="+919949811742" class="flex-1 glass rounded-full px-4 py-2.5 text-sm">
-      <button onclick="saveOtpNumber()" class="btn-primary rounded-full px-6 py-2.5 text-sm font-bold">Save</button>
-    </div>
-    <div class="text-xs text-white/40">Current: <span id="otpSingleCurrent" class="text-amber font-mono">loading...</span> <span id="otpSaveStatus" class="ml-2 hidden text-emerald-400"></span></div>
-  </div>
-</div>
-
-<!-- LIVE WEBSITE JOBS - EDIT SALARY & COUNT (admin controls main site) -->
-<div class="max-w-[1280px] mx-auto px-4 md:px-6 pt-4">
-  <div class="glass rounded-2xl p-4">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-2">
-        <div class="w-9 h-9 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400"><i class="fa-solid fa-briefcase"></i></div>
-        <div>
-          <div class="font-bold text-sm">Live Website Jobs — Edit from Tracker</div>
-          <div class="text-xs text-white/50">Changes here update the main company website instantly. Edit salary, delete, or add jobs.</div>
-        </div>
-      </div>
-      <div class="flex items-center gap-2">
-        <span class="text-xs text-white/40">Total on website:</span>
-        <span id="liveJobsCount" class="bg-amber text-ink text-sm font-bold px-3 py-1 rounded-full">0</span>
-        <button onclick="loadLiveJobs()" class="w-8 h-8 rounded-full glass flex items-center justify-center" title="Refresh"><i class="fa-solid fa-rotate text-xs"></i></button>
-        <button onclick="openAddJobModal()" class="btn-primary rounded-full px-4 py-2 text-sm font-bold"><i class="fa-solid fa-plus mr-1"></i>Add Job</button>
-      </div>
-    </div>
-    <div id="liveJobsList" class="mt-4 grid md:grid-cols-2 gap-3 max-h-[520px] overflow-auto pr-1"></div>
-    <div id="liveJobsEmpty" class="hidden text-center text-sm text-white/40 py-8">No jobs on website. Add one.</div>
-  </div>
-</div>
-
-<!-- Add Job Modal -->
-<div id="addJobModal" class="fixed inset-0 z-[60] hidden">
-  <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick="closeAddJobModal()"></div>
-  <div class="relative min-h-[100dvh] flex items-center justify-center p-4">
-    <div class="glass-strong rounded-2xl max-w-[480px] w-full p-6 relative max-h-[90vh] overflow-auto">
-      <button onclick="closeAddJobModal()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i class="fa-solid fa-xmark text-xs"></i></button>
-      <h3 class="font-bold text-lg">Add / Edit Job on Website</h3>
-      <p class="text-xs text-white/50 mt-1">This will appear instantly on the public company website.</p>
-      <form onsubmit="handleAddJob(event)" class="mt-4 space-y-3">
-        <input id="jobEditId" type="hidden">
-        <input id="jobTitle" required placeholder="Job Title e.g., Security Guard" class="w-full glass rounded-xl px-4 py-3 text-sm">
-        <input id="jobCompany" required placeholder="Company e.g., DLF Magnolias" class="w-full glass rounded-xl px-4 py-3 text-sm">
-        <select id="jobCat" class="w-full glass rounded-xl px-4 py-3 text-sm bg-transparent"><option value="guard">Guard</option><option value="housekeeping">Housekeeping</option><option value="wardboy">Ward Boy</option><option value="helper">Helper</option><option value="servant">Servant</option><option value="manpower">Manpower</option><option value="cctv">CCTV</option><option value="bouncer">Bouncer</option><option value="armed">Armed</option></select>
-        <input id="jobLoc" required placeholder="Location e.g., Hyderabad • Gachibowli" class="w-full glass rounded-xl px-4 py-3 text-sm">
-        <input id="jobSalary" required placeholder="Salary e.g., ₹22k - ₹28k" class="w-full glass rounded-xl px-4 py-3 text-sm">
-        <input id="jobType" placeholder="Type e.g., Full-time • 8h shift" class="w-full glass rounded-xl px-4 py-3 text-sm">
-        <input id="jobTags" placeholder="Tags comma separated e.g., Immediate Joining, Food + Stay" class="w-full glass rounded-xl px-4 py-3 text-sm">
-        <button type="submit" class="w-full btn-primary rounded-full py-3 font-bold">Save to Website</button>
-      </form>
-    </div>
-  </div>
-</div>
 
 <!-- HERO STATS -->
 <div class="max-w-[1280px] mx-auto px-4 md:px-6 pt-6">
@@ -373,6 +275,8 @@ body{
     </div>
     <div id="noResult" class="hidden p-8 text-center text-white/50">No matching applications. Try different search.</div>
   </div>
+
+<div id="noResult" class="hidden p-8 text-center text-white/50">No matching applications. Try different search.</div>
   </div>
   <!-- Kanban View -->
   <div id="kanbanView" class="hidden grid md:grid-cols-5 gap-3 mt-4">
@@ -395,179 +299,7 @@ body{
 </div>
 
 <script>
-// === COMPANY GATE - Tracker is private separate website ===
-const COMPANY_TOKEN_KEY = 'rbm_company_token';
-const COMPANY_USER_KEY = 'rbm_company_user';
-function getCompanyToken(){ return localStorage.getItem(COMPANY_TOKEN_KEY) || localStorage.getItem('rbm_token') || ''; }
-function getCompanyUser(){ try{ return JSON.parse(localStorage.getItem(COMPANY_USER_KEY) || localStorage.getItem('rbm_user') || 'null'); }catch(e){ return null; } }
-function isCompanyUser(u){ if(!u) return false; const r=(u.role||'').toLowerCase(); return r.includes('company')||r.includes('admin')||r.includes('employer')||r.includes('owner')||!!u.isCompany; }
-function showCompanyGate(show){ const g=document.getElementById('companyLoginGate'); if(g) g.classList.toggle('hidden', !show); }
-async function checkCompanyAuth(){
-  const token=getCompanyToken(); const user=getCompanyUser();
-  if(token && user && isCompanyUser(user)){
-    try{
-      const API_BASE = window.location.hostname==='localhost' && window.location.port==='3001' ? '' : (window.location.port==='8767' ? 'http://localhost:3001' : '');
-      const res=await fetch((API_BASE||'')+'/api/auth/company-me', {headers:{'Authorization':'Bearer '+token}});
-      if(res.ok){ showCompanyGate(false); const b=document.getElementById('companyBadge'); const bt=document.getElementById('companyBadgeText'); if(b) b.classList.remove('hidden'); if(bt) bt.textContent=user.name||'Company'; return true; }
-      // token invalid or expired - show gate
-      showCompanyGate(true); return false;
-    }catch(e){
-      // network error - do not hide gate, require server verification
-      console.log('auth check failed', e.message);
-      showCompanyGate(true); return false;
-    }
-  }
-  showCompanyGate(true); return false;
-}
-async function handleCompanyLogin(e){
-  e.preventDefault();
-  const idVal=document.getElementById('companyPhone').value.trim();
-  const passVal=document.getElementById('companyCode').value.trim();
-  const err=document.getElementById('companyLoginError'); const btn=document.getElementById('companyLoginBtn');
-  if(err) err.classList.add('hidden');
-  if(btn){ btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Verifying...'; }
-  try{
-    const API_BASE = window.location.hostname==='localhost' && window.location.port==='3001' ? '' : (window.location.port==='8767' ? 'http://localhost:3001' : '');
-    const res=await fetch((API_BASE||'')+'/api/auth/company-login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id: idVal, password: passVal})});
-    const data=await res.json();
-    if(!res.ok) throw new Error(data.error||'Login failed');
-    localStorage.setItem(COMPANY_TOKEN_KEY, data.token);
-    localStorage.setItem(COMPANY_USER_KEY, JSON.stringify(data.user));
-    localStorage.setItem('rbm_token', data.token);
-    localStorage.setItem('rbm_user', JSON.stringify(data.user));
-    await checkCompanyAuth();
-    if(typeof render==='function') render();
-  }catch(ex){
-    if(err){ err.textContent=ex.message||'Invalid ID or password. Use ID rbmbaleshgoud'; err.classList.remove('hidden'); }
-  } finally {
-    if(btn){ btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-lock"></i> Unlock Tracker'; }
-  }
-}
-function companyLogout(){
-  localStorage.removeItem(COMPANY_TOKEN_KEY); localStorage.removeItem(COMPANY_USER_KEY);
-  showCompanyGate(true);
-}
-async function loadOtpNumber(){
-  try{
-    const token=getCompanyToken(); if(!token) return;
-    const API_BASE = window.location.hostname==='localhost' && window.location.port==='3001' ? '' : (window.location.port==='8767' ? 'http://localhost:3001' : '');
-    const res=await fetch((API_BASE||'')+'/api/settings/otp-number', {headers:{'Authorization':'Bearer '+token}});
-    const data=await res.json();
-    if(res.ok && data.otpSingleNumber){
-      const cur=document.getElementById('otpSingleCurrent'); const inp=document.getElementById('otpSingleInput');
-      if(cur) cur.textContent=data.otpSingleNumber;
-      if(inp && !inp.value) inp.value=data.otpSingleNumber;
-    }
-  }catch(e){ console.log('loadOtpNumber fail', e.message); }
-}
-async function saveOtpNumber(){
-  const inp=document.getElementById('otpSingleInput'); const status=document.getElementById('otpSaveStatus'); const cur=document.getElementById('otpSingleCurrent');
-  const val=inp ? inp.value.trim() : '';
-  if(!val || !/^\+?\d{10,15}$/.test(val.replace(/\s/g,''))){ alert('Enter valid phone, e.g., +919949811742'); return; }
-  try{
-    const token=getCompanyToken();
-    const API_BASE = window.location.hostname==='localhost' && window.location.port==='3001' ? '' : (window.location.port==='8767' ? 'http://localhost:3001' : '');
-    const res=await fetch((API_BASE||'')+'/api/settings/otp-number', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body: JSON.stringify({otpSingleNumber: val})});
-    const data=await res.json();
-    if(!res.ok) throw new Error(data.error);
-    if(cur) cur.textContent=data.otpSingleNumber;
-    if(status){ status.textContent='✓ Saved! All OTPs now go to '+data.otpSingleNumber; status.classList.remove('hidden'); setTimeout(()=>status.classList.add('hidden'), 3000); }
-  }catch(e){ alert(e.message||'Failed to save'); }
-}
-const _origCheckCompanyAuth2 = checkCompanyAuth;
-checkCompanyAuth = async function(){ const r=await _origCheckCompanyAuth2(); if(r){ loadOtpNumber(); loadLiveJobs(); } return r; };
-document.addEventListener('DOMContentLoaded', ()=>{ checkCompanyAuth(); });
-
-// === LIVE WEBSITE JOBS - Admin can edit salary & count directly ===
-async function loadLiveJobs(){
-  const list=document.getElementById('liveJobsList'); const empty=document.getElementById('liveJobsEmpty'); const cnt=document.getElementById('liveJobsCount');
-  if(!list) return;
-  try{
-    const data=await api2('/api/jobs');
-    if(!data || !data.jobs){ if(empty) empty.classList.remove('hidden'); return; }
-    const jobs=data.jobs;
-    if(cnt) cnt.textContent=jobs.length;
-    if(jobs.length===0){ list.innerHTML=''; if(empty) empty.classList.remove('hidden'); return; }
-    if(empty) empty.classList.add('hidden');
-    list.innerHTML=jobs.map(j=>`
-      <div class="glass rounded-xl p-3 flex gap-3 items-center">
-        <img src="${esc(j.img)}" class="w-12 h-12 rounded-lg object-cover">
-        <div class="flex-1 min-w-0">
-          <div class="font-bold text-sm truncate">${esc(j.title)}</div>
-          <div class="text-xs text-white/50 truncate">${esc(j.company)} • ${esc(j.loc)}</div>
-          <div class="text-xs font-bold text-amber mt-1">${esc(j.salary)} <span class="text-white/30 font-normal">• ${esc(j.type)}</span></div>
-          <div class="text-[11px] text-white/30">${esc(j.cat)} • ${j.applicants||0} applicants</div>
-        </div>
-        <div class="flex flex-col gap-1">
-          <button onclick="editLiveJob(${j.id})" class="px-3 py-1 rounded-full bg-amber/20 text-amber border border-amber/30 text-xs font-bold hover:bg-amber hover:text-ink">Edit</button>
-          <button onclick="deleteLiveJob(${j.id})" class="px-3 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/20 text-xs hover:bg-red-500 hover:text-white">Delete</button>
-        </div>
-      </div>
-    `).join('');
-  }catch(e){
-    console.log('loadLiveJobs fail', e.message);
-    if(empty){ empty.textContent='Failed to load jobs. Check company login.'; empty.classList.remove('hidden'); }
-  }
-}
-function openAddJobModal(){
-  document.getElementById('jobEditId').value='';
-  document.getElementById('jobTitle').value='';
-  document.getElementById('jobCompany').value='';
-  document.getElementById('jobLoc').value='';
-  document.getElementById('jobSalary').value='';
-  document.getElementById('jobType').value='';
-  document.getElementById('jobTags').value='';
-  document.getElementById('addJobModal').classList.remove('hidden');
-}
-function closeAddJobModal(){ document.getElementById('addJobModal').classList.add('hidden'); }
-async function editLiveJob(id){
-  try{
-    const data=await api2('/api/jobs');
-    const j=data.jobs.find(x=> x.id===id);
-    if(!j) return alert('Job not found');
-    document.getElementById('jobEditId').value=j.id;
-    document.getElementById('jobTitle').value=j.title;
-    document.getElementById('jobCompany').value=j.company;
-    document.getElementById('jobCat').value=j.cat;
-    document.getElementById('jobLoc').value=j.loc;
-    document.getElementById('jobSalary').value=j.salary;
-    document.getElementById('jobType').value=j.type;
-    document.getElementById('jobTags').value=(j.tags||[]).join(', ');
-    document.getElementById('addJobModal').classList.remove('hidden');
-  }catch(e){ alert(e.message); }
-}
-async function deleteLiveJob(id){
-  if(!confirm('Delete this job from website? Visitors will no longer see it.')) return;
-  try{
-    const res=await api2('/api/jobs/'+id, {method:'DELETE'});
-    if(res && res.ok){ loadLiveJobs(); alert('Job deleted from website.'); } else throw new Error('Delete failed');
-  }catch(e){ alert(e.message); }
-}
-async function handleAddJob(e){
-  e.preventDefault();
-  const id=document.getElementById('jobEditId').value;
-  const payload={
-    title: document.getElementById('jobTitle').value.trim(),
-    company: document.getElementById('jobCompany').value.trim(),
-    cat: document.getElementById('jobCat').value,
-    loc: document.getElementById('jobLoc').value.trim(),
-    salary: document.getElementById('jobSalary').value.trim(),
-    type: document.getElementById('jobType').value.trim(),
-    tags: document.getElementById('jobTags').value.trim(),
-  };
-  try{
-    let res;
-    if(id){
-      res=await api2('/api/jobs/'+id, {method:'PATCH', body: JSON.stringify(payload)});
-    } else {
-      res=await api2('/api/jobs', {method:'POST', body: JSON.stringify(payload)});
-    }
-    if(res && res.ok){ closeAddJobModal(); loadLiveJobs(); alert(id ? 'Job updated on website!' : 'Job added to website!'); } else throw new Error(res?.error||'Failed');
-  }catch(e){ alert(e.message); }
-}
-
 const KEY = 'rbm_applications';
-function esc(s){ return String(s||'').replace(/[&<>"']/g, m=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 function getApps(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch(e){ return []; } }
 function saveApps(a){ localStorage.setItem(KEY, JSON.stringify(a)); }
 
@@ -655,15 +387,15 @@ function render(){
         ${a.photo ? `<img src="${a.photo}" class="w-9 h-9 rounded-full object-cover border border-white/20">` : `<div class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white/40 text-xs"><i class="fa-solid fa-user"></i></div>`}
       </td>
       <td class="px-4 py-3">
-        <div class="font-semibold whitespace-nowrap">${esc(a.name)}</div>
+        <div class="font-semibold whitespace-nowrap">${a.name}</div>
         <div class="text-xs text-white/40">ID ${String(a.id).slice(-6)}</div>
       </td>
       <td class="px-4 py-3 whitespace-nowrap">
-        <a href="tel:${esc(a.phone).replace(/\s/g,'')}" class="text-amber hover:underline font-medium">${esc(a.phone)}</a>
+        <a href="tel:${a.phone.replace(/\s/g,'')}" class="text-amber hover:underline font-medium">${a.phone}</a>
       </td>
-      <td class="px-4 py-3"><span class="glass rounded-full px-2.5 py-1 text-xs whitespace-nowrap">${esc(a.city)}</span></td>
+      <td class="px-4 py-3"><span class="glass rounded-full px-2.5 py-1 text-xs whitespace-nowrap">${a.city}</span></td>
       <td class="px-4 py-3">
-        <div class="font-medium whitespace-nowrap max-w-[180px] truncate" title="${esc(a.jobTitle)}">${esc(a.jobTitle)}</div>
+        <div class="font-medium whitespace-nowrap max-w-[180px] truncate" title="${a.jobTitle}">${a.jobTitle}</div>
         <div class="text-xs text-white/40">Telangana â€¢ ${a.exp}</div>
       </td>
       <td class="px-4 py-3 whitespace-nowrap">
@@ -680,8 +412,8 @@ function render(){
         <div class="text-[11px] text-white/30">${new Date(a.date).toLocaleTimeString()}</div>
       </td>
       <td class="px-4 py-3 text-right whitespace-nowrap">
-        <a href="tel:${esc(a.phone).replace(/\s/g,'')}" class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 inline-flex items-center justify-center hover:bg-emerald-500 hover:text-white transition" title="Call"><i class="fa-solid fa-phone text-xs"></i></a>
-        <a href="https://wa.me/${esc(a.phone).replace(/[^0-9]/g,'')}" target="_blank" class="w-8 h-8 rounded-full bg-green-500/20 text-green-400 border border-green-500/30 inline-flex items-center justify-center hover:bg-green-500 hover:text-white transition ml-1" title="WhatsApp"><i class="fa-brands fa-whatsapp text-xs"></i></a>
+        <a href="tel:${a.phone.replace(/\s/g,'')}" class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 inline-flex items-center justify-center hover:bg-emerald-500 hover:text-white transition" title="Call"><i class="fa-solid fa-phone text-xs"></i></a>
+        <a href="https://wa.me/${a.phone.replace(/[^0-9]/g,'')}" target="_blank" class="w-8 h-8 rounded-full bg-green-500/20 text-green-400 border border-green-500/30 inline-flex items-center justify-center hover:bg-green-500 hover:text-white transition ml-1" title="WhatsApp"><i class="fa-brands fa-whatsapp text-xs"></i></a>
         <button onclick="delApp(${a.id})" class="w-8 h-8 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 inline-flex items-center justify-center hover:bg-red-500 hover:text-white transition ml-1" title="Delete"><i class="fa-solid fa-trash text-xs"></i></button>
       </td>
     </tr>
@@ -780,7 +512,7 @@ function renderKanban(){
     if(!el) return;
     const div=document.createElement('div');
     div.className='glass rounded-xl p-3 text-xs';
-    div.innerHTML=`<div class="font-bold truncate">${esc(a.name)}</div><div class="text-white/50 truncate">${esc(a.jobTitle)}</div><div class="text-white/40">${esc(a.city)} • ${esc(a.phone)}</div><div class="flex gap-1 mt-2"><select onchange="updateStatus(${a.id}, this.value)" class="flex-1 glass rounded-full px-2 py-1 text-xs"><option ${a.status==='New'?'selected':''}>New</option><option ${a.status==='Shortlisted'?'selected':''}>Shortlisted</option><option ${a.status==='Interview'?'selected':''}>Interview</option><option ${a.status==='Hired'?'selected':''}>Hired</option><option ${a.status==='Rejected'?'selected':''}>Rejected</option></select></div>`;
+    div.innerHTML=`<div class="font-bold truncate">${a.name}</div><div class="text-white/50 truncate">${a.jobTitle}</div><div class="text-white/40">${a.city} • ${a.phone}</div><div class="flex gap-1 mt-2"><select onchange="updateStatus(${a.id}, this.value)" class="flex-1 glass rounded-full px-2 py-1 text-xs"><option ${a.status==='New'?'selected':''}>New</option><option ${a.status==='Shortlisted'?'selected':''}>Shortlisted</option><option ${a.status==='Interview'?'selected':''}>Interview</option><option ${a.status==='Hired'?'selected':''}>Hired</option><option ${a.status==='Rejected'?'selected':''}>Rejected</option></select></div>`;
     el.appendChild(div);
   });
   // also update when render is called
@@ -890,27 +622,16 @@ const _origRender6 = render;
 render = function(){ _origRender6(); try{ renderPerf(); }catch(e){} };
 
 
-// === REAL BACKEND API for tracker - COMPANY PRIVATE (separate website) ===
+// === REAL BACKEND API for tracker ===
 const API_BASE2 = window.location.hostname==='localhost' && window.location.port==='3001' ? '' : (window.location.port==='8767' ? 'http://localhost:3001' : '');
 async function api2(path, opts={}){
   const headers=opts.headers||{};
-  const cToken = (typeof getCompanyToken==='function' ? getCompanyToken() : (localStorage.getItem('rbm_company_token')||localStorage.getItem('rbm_token')||''));
-  if(cToken && !headers['Authorization']) headers['Authorization']='Bearer '+cToken;
   if(!(opts.body instanceof FormData) && !headers['Content-Type'] && opts.method!=='GET') headers['Content-Type']='application/json';
-  try{
-    const res=await fetch((API_BASE2||'')+path,{...opts, headers});
-    if(res.status===401 || res.status===403){
-      if(typeof showCompanyGate==='function') showCompanyGate(true);
-      const data=await res.json().catch(()=>({})); throw new Error(data.error||'Company access required - tracker is private');
-    }
-    const data=await res.json().catch(()=>({})); if(!res.ok) throw new Error(data.error); return data;
-  }catch(e){ console.log('tracker API fail', e.message); if(e.message.includes('Company')) throw e; return null; }
+  try{ const res=await fetch((API_BASE2||'')+path,{...opts, headers}); const data=await res.json().catch(()=>({})); if(!res.ok) throw new Error(data.error); return data; }catch(e){ console.log('tracker API fail', e.message); return null; }
 }
 const _origRenderTracker = render;
 render = async function(){
-  // try API first - requires company token
-  const hasCompany = typeof checkCompanyAuth==='function' ? await checkCompanyAuth() : true;
-  if(!hasCompany) return;
+  // try API first
   const data = await api2('/api/applications');
   if(data && data.applications){
     localStorage.setItem(KEY, JSON.stringify(data.applications));
@@ -965,6 +686,150 @@ function renderCalendar(){
 const _origRender3 = render;
 render = function(){ _origRender3(); try{ renderCalendar(); }catch(e){} };
 
+function renderJobManage(){
+  const list=document.getElementById('jobManageList');
+  const empty=document.getElementById('jobManageEmpty');
+  const count=document.getElementById('jobManageCount');
+  if(!list) return;
+  let custom=[];
+  try{ custom=JSON.parse(localStorage.getItem('rbm_jobs')||'[]'); }catch(e){}
+  if(count) count.textContent=custom.length+' custom jobs';
+  if(custom.length===0){
+    list.innerHTML='';
+    if(empty) empty.classList.remove('hidden');
+    return;
+  }
+  if(empty) empty.classList.add('hidden');
+  list.innerHTML=custom.map((j,idx)=>`
+    <div class="glass rounded-xl p-3 flex gap-3 items-center">
+      <img src="${j.img}" class="w-12 h-12 rounded-lg object-cover">
+      <div class="flex-1 min-w-0">
+        <div class="font-bold text-xs truncate">${j.title}</div>
+        <div class="text-xs text-white/50 truncate">${j.company} • ${j.loc} • ${j.salary}</div>
+        <div class="text-[11px] text-white/30">${j.cat} • ${j.type}</div>
+      </div>
+      <div class="flex gap-1">
+        <button onclick="featureJob(${j.id})" class="w-8 h-8 rounded-full bg-amber/20 text-amber border border-amber/30 flex items-center justify-center hover:bg-amber hover:text-ink" title="Feature (Pay)"><i class="fa-solid fa-star text-xs"></i></button>
+        <button onclick="deleteJob(${j.id})" class="w-8 h-8 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center hover:bg-red-500 hover:text-white" title="Delete"><i class="fa-solid fa-trash text-xs"></i></button>
+      </div>
+    </div>
+  `).join('');
+}
+function deleteJob(id){
+  if(!confirm('Delete this job?')) return;
+  let custom=JSON.parse(localStorage.getItem('rbm_jobs')||'[]');
+  custom=custom.filter(j=> j.id!==id);
+  localStorage.setItem('rbm_jobs', JSON.stringify(custom));
+  renderJobManage();
+}
+function clearJobs(){
+  if(!confirm('Clear all custom jobs?')) return;
+  localStorage.removeItem('rbm_jobs');
+  renderJobManage();
+}
+function featureJob(id){
+  document.getElementById('payModal')?.classList.remove('hidden');
+  // store id for pay
+  window._featureId=id;
+  // replace pay button to handle feature
+  if(false && confirm('Feature this job for 7 days for ₹499? (Demo payment)')){
+    alert('Payment successful! Job featured for 7 days. (Demo)'); document.getElementById('payModal')?.classList.add('hidden');
+    // mark as hot
+    let custom=JSON.parse(localStorage.getItem('rbm_jobs')||'[]');
+    const idx=custom.findIndex(j=> j.id===id);
+    if(idx>-1){ custom[idx].hot=true; localStorage.setItem('rbm_jobs', JSON.stringify(custom)); renderJobManage(); }
+  }
+}
+const _origRender4 = render;
+render = function(){ _origRender4(); try{ renderJobManage(); }catch(e){} };
+
+function renderPayroll(){
+  const data=getApps();
+  const staff=data.length;
+  document.getElementById('payrollStaff').textContent=staff;
+  const avg=18000;
+  const payout=staff*avg;
+  const gst=Math.round(payout*0.18);
+  const total=payout+gst;
+  document.getElementById('payrollPayout').textContent='₹'+payout.toLocaleString('en-IN');
+  document.getElementById('payrollGst').textContent='₹'+gst.toLocaleString('en-IN');
+  document.getElementById('payrollTotal').textContent='₹'+total.toLocaleString('en-IN');
+  // SOS log
+  const sos=data.filter(a=> a.jobTitle.includes('SOS'));
+  const log=document.getElementById('sosLog');
+  if(log){
+    if(sos.length===0) log.innerHTML='<div class="text-white/30 p-4 text-center">No SOS yet</div>';
+    else log.innerHTML=sos.slice(0,5).map(s=>`<div class="glass rounded-xl p-3 flex justify-between"><div><div class="font-bold">${s.name}</div><div class="text-white/50">${new Date(s.date).toLocaleString()}</div></div><span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full">SOS</span></div>`).join('');
+  }
+}
+const _origRender5 = render;
+render = function(){ _origRender5(); try{ renderPayroll(); }catch(e){} };
+
+function renderPerf(){
+  const data=getApps();
+  const total=data.length;
+  const hired=data.filter(a=> a.status==='Hired').length;
+  const rate= total? Math.round(hired/total*100):0;
+  const el=document.getElementById('conversionRate');
+  if(el) el.textContent=rate+'% conversion ('+hired+'/'+total+')';
+  const ctx=document.getElementById('perfChart');
+  if(ctx && window.Chart){
+    if(window._perfChart) window._perfChart.destroy();
+    window._perfChart=new Chart(ctx,{type:'bar',data:{labels:['New','Shortlisted','Interview','Hired','Rejected'],datasets:[{label:'Applications',data:[
+      data.filter(a=>a.status==='New').length,
+      data.filter(a=>a.status==='Shortlisted').length,
+      data.filter(a=>a.status==='Interview').length,
+      data.filter(a=>a.status==='Hired').length,
+      data.filter(a=>a.status==='Rejected').length
+    ],backgroundColor:['#6B7280','#FFB800','#06B6D4','#10B981','#EF4444'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{color:'#9CA3AF'},grid:{color:'rgba(255,255,255,0.06)'},beginAtZero:true},x:{ticks:{color:'#9CA3AF'},grid:{display:false}}}}});
+  }
+}
+const _origRender6 = render;
+render = function(){ _origRender6(); try{ renderPerf(); }catch(e){} };
+
+
+// === REAL BACKEND API for tracker ===
+const API_BASE2 = window.location.hostname==='localhost' && window.location.port==='3001' ? '' : (window.location.port==='8767' ? 'http://localhost:3001' : '');
+async function api2(path, opts={}){
+  const headers=opts.headers||{};
+  if(!(opts.body instanceof FormData) && !headers['Content-Type'] && opts.method!=='GET') headers['Content-Type']='application/json';
+  try{ const res=await fetch((API_BASE2||'')+path,{...opts, headers}); const data=await res.json().catch(()=>({})); if(!res.ok) throw new Error(data.error); return data; }catch(e){ console.log('tracker API fail', e.message); return null; }
+}
+const _origRenderTracker = render;
+render = async function(){
+  // try API first
+  const data = await api2('/api/applications');
+  if(data && data.applications){
+    localStorage.setItem(KEY, JSON.stringify(data.applications));
+    apps=data.applications;
+  }
+  _origRenderTracker();
+};
+async function delAppAPI(id){
+  const res=await api2('/api/applications/'+id, {method:'DELETE'});
+  if(res && res.ok){
+    // also update local
+    let cur=getApps(); cur=cur.filter(a=> a.id!==id); saveApps(cur);
+    render();
+  } else {
+    // fallback
+    if(!confirm('Delete this application?')) return;
+    let cur=getApps(); cur=cur.filter(a=> a.id!==id); saveApps(cur); render();
+  }
+}
+async function updateStatusAPI(id, val){
+  const res=await api2('/api/applications/'+id+'/status', {method:'PATCH', body: JSON.stringify({status: val})});
+  if(res && res.ok){
+    let cur=getApps(); const idx=cur.findIndex(a=> a.id===id); if(idx>-1){ cur[idx].status=val; saveApps(cur); render(); }
+  } else {
+    let cur=getApps(); const idx=cur.findIndex(a=> a.id===id); if(idx>-1){ cur[idx].status=val; saveApps(cur); render(); }
+  }
+}
+// override
+delApp = delAppAPI;
+updateStatus = updateStatusAPI;
+
+document.getElementById('search').addEventListener('input', render);
 
 // auto-refresh every 2s to catch new submissions from main site (when both open)
 setInterval(render, 2000);

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Clients - SecureStaff</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background: #f4f6f8; }
+        header { background: #1a1a2e; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
+        nav a { color: #fff; text-decoration: none; margin-left: 20px; font-size: 14px; }
+        nav a:hover { text-decoration: underline; }
+        .container { max-width: 1000px; margin: 24px auto; padding: 0 20px; }
+        .card { background: #fff; padding: 18px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.1); margin-bottom: 16px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; }
+    </style>
+</head>
+<body>
+    <header>
+        <h2>Clients</h2>
+        <nav>
+            <a href="{{ url_for('main.company_dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('main.company_notifications') }}">Notifications</a>
+            <a href="{{ url_for('main.company_clients') }}">Clients</a>
+            <a href="{{ url_for('main.company_workers') }}">Workers</a>
+            <a href="{{ url_for('main.company_jobs') }}">Jobs</a>
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
+        </nav>
+    </header>
+    <div class="container">
+        <div class="card">
+            <h3>Client Contact Details ({{ clients|length }})</h3>
+            <table>
+                <tr><th>Email</th><th>Phone</th></tr>
+                {% for c in clients %}
+                <tr>
+                    <td>{{ c.email }}</td>
+                    <td>{{ c.phone }}</td>
+                </tr>
+                {% else %}<tr><td colspan="2">No clients registered yet.</td></tr>{% endfor %}
+            </table>
+        </div>
+    </div>
+</body>
+</html>
