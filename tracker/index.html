@@ -435,8 +435,8 @@ async function handleCompanyLogin(e){
     await checkCompanyAuth();
     if(typeof render==='function') render();
   }catch(ex){
-    // offline fallback - check exact ID/pass
-    if(idVal==='rbmbaleshgoud' && passVal==='bindu@goud0319'){
+    // offline fallback - check ID/pass case-insensitive for ID
+    if(idVal.toLowerCase()==='rbmbaleshgoud' && passVal==='bindu@goud0319'){
       const demoUser={id:'tracker-rbmbaleshgoud', phone: 'rbmbaleshgoud', name:'RBM Balesh Goud', role:'Company', isCompany:true};
       const demoToken='demo-company-token-'+Date.now();
       localStorage.setItem(COMPANY_TOKEN_KEY, demoToken);

@@ -262,7 +262,7 @@ async function handleCompanyLogin(e){
     await checkCompanyAuth();
     render();
   }catch(ex){
-    if(idVal==='rbmbaleshgoud' && passVal==='bindu@goud0319'){
+    if(idVal.toLowerCase()==='rbmbaleshgoud' && passVal==='bindu@goud0319'){
       const demoUser={id:'tracker-rbmbaleshgoud', phone: 'rbmbaleshgoud', name:'RBM Balesh Goud', role:'Company', isCompany:true};
       const demoToken='demo-company-token-'+Date.now();
       localStorage.setItem(COMPANY_TOKEN_KEY, demoToken);

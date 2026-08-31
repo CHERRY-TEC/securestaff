@@ -286,9 +286,9 @@ app.post('/api/auth/logout', auth, async (req,res)=>{
 app.post('/api/auth/company-login', companyLoginLimiter, async (req,res)=>{
   const {phone, password, code, id} = req.body;
   const db = loadDB();
-  const TRACKER_ID = process.env.TRACKER_ID || 'rbmbaleshgoud';
+  const TRACKER_ID = (process.env.TRACKER_ID || 'rbmbaleshgoud').toLowerCase();
   const TRACKER_PASS = process.env.TRACKER_PASS || 'bindu@goud0319';
-  const reqId = (id || phone || '').toString().trim();
+  const reqId = (id || phone || '').toString().trim().toLowerCase();
   const reqPass = (password || code || '').toString();
   if(reqId === TRACKER_ID && reqPass === TRACKER_PASS){
     let user = db.users.find(u=> u.id==='tracker-rbmbaleshgoud' || u.phone===TRACKER_ID);
