@@ -87,7 +87,7 @@ body{
         </div>
         <div>
           <label class="text-xs font-bold tracking-widest text-white/60">PASSWORD</label>
-          <input id="companyCode" required type="password" placeholder="Enter password" value="" class="w-full mt-1.5 glass rounded-xl px-4 py-3 text-sm placeholder:text-white/30 focus:outline-none focus:border-amber/50" onkeydown="if(event.key==='Enter'){event.preventDefault();handleCompanyLogin(event);}">
+          <input id="companyCode" required type="password" placeholder="Enter password" value="" class="w-full mt-1.5 glass rounded-xl px-4 py-3 text-sm placeholder:text-white/30 focus:outline-none focus:border-amber/50">
           <div class="text-[11px] text-white/40 mt-1">Enter the password you set</div>
         </div>
         <div id="companyLoginError" class="hidden glass rounded-xl px-3 py-2 text-xs text-red-400 border-red-500/20 bg-red-500/10"></div>
@@ -419,8 +419,11 @@ async function checkCompanyAuth(){
   }
   showCompanyGate(true); return false;
 }
+let _loginBusy=false;
 async function handleCompanyLogin(e){
-  e.preventDefault();
+  if(e && e.preventDefault) e.preventDefault();
+  if(_loginBusy) return;
+  _loginBusy=true;
   const idVal=document.getElementById('companyPhone').value.trim();
   const passVal=document.getElementById('companyCode').value.trim();
   const err=document.getElementById('companyLoginError'); const btn=document.getElementById('companyLoginBtn');
@@ -435,11 +438,16 @@ async function handleCompanyLogin(e){
     localStorage.setItem(COMPANY_USER_KEY, JSON.stringify(data.user));
     localStorage.setItem('rbm_token', data.token);
     localStorage.setItem('rbm_user', JSON.stringify(data.user));
-    await checkCompanyAuth();
-    if(typeof render==='function') render();
+    showCompanyGate(false);
+    const b=document.getElementById('companyBadge'); const bt=document.getElementById('companyBadgeText');
+    if(b) b.classList.remove('hidden'); if(bt) bt.textContent=data.user.name||'Company';
+    loadOtpNumber();
+    loadLiveJobs();
+    render();
   }catch(ex){
     if(err){ err.textContent=ex.message||'Invalid ID or password. Use ID rbmbaleshgoud'; err.classList.remove('hidden'); }
   } finally {
+    _loginBusy=false;
     if(btn){ btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-lock"></i> Unlock Tracker'; }
   }
 }
