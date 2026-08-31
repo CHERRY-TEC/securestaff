@@ -67,12 +67,28 @@ body{background:#070A14;color:white;overflow-x:hidden}
 ::-webkit-scrollbar-track{background:#070A14}
 ::-webkit-scrollbar-thumb{background:#2a2f45;border-radius:999px}
 ::-webkit-scrollbar-thumb:hover{background:#FFB800}
-/* Loader — smooth fullscreen video */
-#loader{position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:transform 0.9s cubic-bezier(0.16,1,0.3,1), opacity 0.6s ease; will-change:transform, opacity; backface-visibility:hidden; transform:translateZ(0)}
+/* Loader — smooth fullscreen video - FIXED for phone viewport */
+#loader{position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:transform 0.9s cubic-bezier(0.16,1,0.3,1), opacity 0.6s ease; will-change:transform, opacity; backface-visibility:hidden; transform:translateZ(0); width:100vw; height:100vh; height:100dvh; max-width:100vw; max-height:100dvh; max-height:100dvh}
 #loader.hidden{transform:translateY(-100%) translateZ(0);opacity:0;pointer-events:none}
-.video-wrap{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:hidden;background:#000;border-radius:0;border:none;box-shadow:none}
-.video-wrap video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;background:#000; opacity:0; transition:opacity 0.6s ease; will-change:opacity, transform; transform:translateZ(0); backface-visibility:hidden}
+.video-wrap{position:absolute;inset:0;width:100vw;height:100vh;height:100dvh;max-width:100vw;max-height:100vh;max-height:100dvh;display:block;overflow:hidden;background:#000;border-radius:0;border:none;box-shadow:none}
+.video-wrap video{position:absolute;inset:0;width:100%;height:100%;width:100vw;height:100vh;height:100dvh;max-width:100vw;max-height:100vh;max-height:100dvh;object-fit:cover;object-position:center center;display:block;background:#000; opacity:0; transition:opacity 0.6s ease; will-change:opacity, transform; transform:translateZ(0); backface-visibility:hidden}
 .video-wrap video.is-ready{opacity:1}
+/* Phone fix: ensure loader video stays contained within viewport, no crop overflow or blank bars */
+@media(max-width:768px){
+  #loader{width:100vw;height:100dvh;min-height:100dvh;overflow:hidden}
+  .video-wrap{width:100vw;height:100dvh;min-height:100dvh}
+  .video-wrap video{width:100vw;height:100dvh;object-fit:cover;object-position:center center}
+  /* Prevent orbs/particles from causing horizontal scroll on phone */
+  html,body{overflow-x:hidden;max-width:100vw}
+  #hero{overflow:hidden;max-width:100vw}
+  .orb{filter:blur(30px);opacity:0.10}
+  .orb-a{width:300px;height:300px;left:-60px;top:-20px}
+  .orb-b{width:280px;height:280px;right:-40px}
+  .orb-c{width:360px;height:360px}
+  .particles{max-width:100vw;overflow:hidden}
+  #guardLightbox .max-w-\[720px\]{max-width:92vw}
+  #guardLightboxImg{max-height:62vh;max-height:62dvh;width:92vw;object-fit:contain}
+}
 .ring,.ring2{display:none}
 .shield-wrap{position:relative;width:140px;height:160px;display:flex;align-items:center;justify-content:center}
 .shield-svg{width:120px;height:140px;filter:drop-shadow(0 0 30px rgba(255,184,0,0.45))}
