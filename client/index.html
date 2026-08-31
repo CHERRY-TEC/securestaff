@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RBM Security — Elite Security Jobs Platform</title>
 <meta name="description" content="Telangana's #1 hiring platform for security guards, housekeeping, ward boys, helpers, servants and bulk manpower supply. Verified, PSARA certified, Telangana only - Hyderabad, Warangal, Karimnagar.">
 <meta name="keywords" content="RBM Security, security guard jobs Hyderabad, housekeeping jobs Telangana, ward boy jobs Hyderabad, helper jobs, servant jobs, manpower supply Hyderabad, PSARA, Telangana jobs">
@@ -62,24 +61,34 @@ tailwind.config = {
 }
 </script>
 <style>
-*,*::before,*::after{box-sizing:border-box; min-width:0}
-html{max-width:100%; overflow-x:hidden; overflow-x:clip; width:100%; -ms-overflow-style:none; scrollbar-width:thin}
 *{scroll-behavior:smooth}
-body{background:#070A14;color:white;overflow-x:hidden; overflow-x:clip; max-width:100%; width:100%; margin:0; padding:0; position:relative}
-img,video,iframe,svg{max-width:100%; height:auto}
-img,video{object-fit:cover}
-/* Edge: ensure grid backgrounds don't cause scroll */
-.hero-grid{max-width:100vw; overflow:hidden}
+body{background:#070A14;color:white;overflow-x:hidden}
 ::-webkit-scrollbar{width:8px;height:8px}
 ::-webkit-scrollbar-track{background:#070A14}
 ::-webkit-scrollbar-thumb{background:#2a2f45;border-radius:999px}
 ::-webkit-scrollbar-thumb:hover{background:#FFB800}
-/* Loader — smooth fullscreen video */
-#loader{position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:transform 0.9s cubic-bezier(0.16,1,0.3,1), opacity 0.6s ease; will-change:transform, opacity; backface-visibility:hidden; transform:translateZ(0)}
+/* Loader — smooth fullscreen video - FIXED for phone viewport */
+#loader{position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:transform 0.9s cubic-bezier(0.16,1,0.3,1), opacity 0.6s ease; will-change:transform, opacity; backface-visibility:hidden; transform:translateZ(0); width:100vw; height:100vh; height:100dvh; max-width:100vw; max-height:100dvh; max-height:100dvh}
 #loader.hidden{transform:translateY(-100%) translateZ(0);opacity:0;pointer-events:none}
-.video-wrap{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:hidden;background:#000;border-radius:0;border:none;box-shadow:none}
-.video-wrap video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;background:#000; opacity:0; transition:opacity 0.6s ease; will-change:opacity, transform; transform:translateZ(0); backface-visibility:hidden}
+.video-wrap{position:absolute;inset:0;width:100vw;height:100vh;height:100dvh;max-width:100vw;max-height:100vh;max-height:100dvh;display:block;overflow:hidden;background:#000;border-radius:0;border:none;box-shadow:none}
+.video-wrap video{position:absolute;inset:0;width:100%;height:100%;width:100vw;height:100vh;height:100dvh;max-width:100vw;max-height:100vh;max-height:100dvh;object-fit:cover;object-position:center center;display:block;background:#000; opacity:0; transition:opacity 0.6s ease; will-change:opacity, transform; transform:translateZ(0); backface-visibility:hidden}
 .video-wrap video.is-ready{opacity:1}
+/* Phone fix: ensure loader video stays contained within viewport, no crop overflow or blank bars */
+@media(max-width:768px){
+  #loader{width:100vw;height:100dvh;min-height:100dvh;overflow:hidden}
+  .video-wrap{width:100vw;height:100dvh;min-height:100dvh}
+  .video-wrap video{width:100vw;height:100dvh;object-fit:cover;object-position:center center}
+  /* Prevent orbs/particles from causing horizontal scroll on phone */
+  html,body{overflow-x:hidden;max-width:100vw}
+  #hero{overflow:hidden;max-width:100vw}
+  .orb{filter:blur(30px);opacity:0.10}
+  .orb-a{width:300px;height:300px;left:-60px;top:-20px}
+  .orb-b{width:280px;height:280px;right:-40px}
+  .orb-c{width:360px;height:360px}
+  .particles{max-width:100vw;overflow:hidden}
+  #guardLightbox .max-w-\[720px\]{max-width:92vw}
+  #guardLightboxImg{max-height:62vh;max-height:62dvh;width:92vw;object-fit:contain}
+}
 .ring,.ring2{display:none}
 .shield-wrap{position:relative;width:140px;height:160px;display:flex;align-items:center;justify-content:center}
 .shield-svg{width:120px;height:140px;filter:drop-shadow(0 0 30px rgba(255,184,0,0.45))}
@@ -148,6 +157,10 @@ img,video{object-fit:cover}
 @keyframes particleFloat{0%{transform:translateY(100vh) translateX(0) scale(0); opacity:0}10%{opacity:0.6}90%{opacity:0.4}100%{transform:translateY(-10vh) translateX(40px) scale(1); opacity:0}}
 .kenburns{animation:kenburns 18s ease-in-out infinite alternate}
 @keyframes kenburns{0%{transform:scale(1) translate(0,0)}100%{transform:scale(1.08) translate(-1.5%, -1%)}}
+/* Company-only tracker link - hidden for public, visible for company */
+.company-only{display:none !important}
+.company-only.visible{display:flex !important}
+.company-lock{opacity:0.6}
 </style>
 </head>
 <body class="font-outfit antialiased selection:bg-amber selection:text-ink">
@@ -166,14 +179,19 @@ img,video{object-fit:cover}
   </div>
 </div>
 
-<!-- ===== LOADER — FULLSCREEN VIDEO ===== -->
+<!-- ===== LOADER — FULLSCREEN VIDEO - PHONE OPTIMIZED ===== -->
 <div id="loader">
-  <!-- Fullscreen video — auto-starts, sound always on, no line -->
+  <!-- Fullscreen video — phone: muted autoplay guaranteed, fallback logo if video fails -->
   <div class="video-wrap">
-    <video id="logoVideo" autoplay muted playsinline webkit-playsinline preload="auto" poster="" disablePictureInPicture controlsList="nodownload" style="background:#000">
+    <video id="logoVideo" autoplay muted playsinline webkit-playsinline preload="auto" poster="./rbm-logo.png" disablePictureInPicture controlsList="nodownload" crossorigin="anonymous" style="background:#000">
       <source src="./logo-animation.mp4" type="video/mp4">
       Your browser does not support video.
     </video>
+    <div id="videoFallback" class="absolute inset-0 hidden items-center justify-center bg-black flex-col gap-4">
+      <img src="./rbm-logo.png" alt="RBM" class="w-24 h-24 object-contain opacity-90">
+      <div class="text-amber font-space font-bold tracking-[-0.02em]">RBM SECURITY</div>
+      <div class="w-24 h-1 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-amber animate-pulse w-1/2"></div></div>
+    </div>
   </div>
   <!-- hidden progress (kept for JS, no visual) -->
   <div id="loaderProgress" class="hidden" style="width:0%"></div>
@@ -201,7 +219,7 @@ img,video{object-fit:cover}
         <a href="#categories" class="hover:text-white transition">Categories</a>
         <a href="#how" class="hover:text-white transition">How it works</a>
         <a href="#employers" class="hover:text-white transition">For Employers</a>
-        <a href="./applications.html" target="_blank" class="hover:text-white transition flex items-center gap-1.5">Applications <span id="navAppCount" class="bg-amber text-ink text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span></a>
+        <a href="javascript:void(0)" onclick="handleTrackerAccess()" class="hover:text-white transition flex items-center gap-1.5" title="Tracker is company-only, separate website"><i class="fa-solid fa-lock text-[10px] text-amber"></i> Tracker <span id="navAppCount" class="company-only bg-amber text-ink text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span> <span class="company-only text-[10px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-full">COMPANY</span></a>
       </div>
       <div class="flex items-center gap-2 md:gap-3">
         <button id="themeToggle" onclick="toggleTheme()" class="hidden md:flex w-9 h-9 rounded-full glass items-center justify-center" title="Toggle theme"><i class="fa-solid fa-moon text-xs"></i></button>
@@ -231,7 +249,7 @@ img,video{object-fit:cover}
       <a href="#categories" class="text-white/80">Categories</a>
       <a href="#how" class="text-white/80">How it works</a>
       <a href="#employers" class="text-white/80">For Employers</a>
-      <a href="./applications.html" target="_blank" class="text-white/80 flex items-center justify-between">Applications <span id="navAppCountMobile" class="bg-amber text-ink text-xs font-bold px-2 py-0.5 rounded-full">0</span></a>
+      <a href="javascript:void(0)" onclick="handleTrackerAccess()" class="text-white/80 flex items-center justify-between"><span class="flex items-center gap-1.5"><i class="fa-solid fa-lock text-amber text-xs"></i> Tracker <span class="text-[10px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-full">COMPANY ONLY</span></span> <span id="navAppCountMobile" class="company-only bg-amber text-ink text-xs font-bold px-2 py-0.5 rounded-full">0</span></a>
       <a href="javascript:void(0)" onclick="openAuth()" class="btn-ghost rounded-full px-5 py-3 text-center font-semibold">Sign In / Register</a>
       <div class="flex gap-2">
         <button onclick="switchLang('en')" class="flex-1 btn-ghost rounded-full py-2 text-xs">EN</button>
@@ -1781,64 +1799,58 @@ function startRafProgress(){
 
 document.body.style.overflow='hidden';
 
-// Pre-warm video — auto-start guaranteed + sound always ON
+// Pre-warm video — AUTO-START without touch (muted autoplay is allowed on all phones)
 if(video){
   video.setAttribute('webkit-playsinline','');
   video.setAttribute('playsinline','');
-  // start muted to guarantee autoplay, then unmute immediately for sound-on
-  video.muted = true;
-  video.volume = 1;
-  video.defaultMuted = false;
+  video.muted = true; // keep muted for autoplay - no touch needed
+  video.volume = 0;
+  video.defaultMuted = true;
   const btnInit = document.getElementById('unmuteBtn');
-  if(btnInit) btnInit.innerHTML = '<i class="fa-solid fa-volume-high text-sm"></i>';
-  const markReady = ()=>{ video.classList.add('is-ready'); };
+  if(btnInit) btnInit.innerHTML = '<i class="fa-solid fa-volume-xmark text-xs"></i>';
+  const fb = document.getElementById('videoFallback');
+  const markReady = ()=>{ 
+    video.classList.add('is-ready'); 
+    if(fb){ fb.classList.add('hidden'); fb.classList.remove('flex'); }
+  };
+  const showFallback = ()=>{
+    if(fb){ fb.classList.remove('hidden'); fb.classList.add('flex'); }
+    // still mark video ready to show fallback bg
+    video.classList.add('is-ready');
+  };
   video.addEventListener('canplay', markReady, {once:true});
   video.addEventListener('loadeddata', markReady, {once:true});
-  if(video.readyState >= 3) markReady();
+  video.addEventListener('canplaythrough', markReady, {once:true});
+  if(video.readyState >= 2) markReady();
 
-  // Auto-start: muted autoplay is allowed, then switch to sound-on
-  const autoStartWithSound = ()=>{
-    video.muted = true; // ensure autoplay succeeds
+  // AUTO-START: muted autoplay - works on iOS/Android without touch
+  const autoStartMuted = ()=>{
+    video.muted = true;
+    video.volume = 0;
     const p = video.play();
     if(p && p.then){
       p.then(()=>{
-        // playback started — now enable sound
-        setTimeout(()=>{
-          video.muted = false;
-          video.volume = 1;
-          const b = document.getElementById('unmuteBtn');
-          if(b) b.innerHTML = '<i class="fa-solid fa-volume-high text-sm"></i>';
-          // some browsers block unmute without gesture — if still muted, wait for interaction
-          if(video.muted){
-            const enableOnInteraction = ()=>{
-              video.muted = false;
-              video.volume = 1;
-              video.play().catch(()=>{});
-              if(b) b.innerHTML = '<i class="fa-solid fa-volume-high text-sm"></i>';
-              document.removeEventListener('click', enableOnInteraction);
-              document.removeEventListener('touchstart', enableOnInteraction);
-            };
-            document.addEventListener('click', enableOnInteraction, {once:true});
-            document.addEventListener('touchstart', enableOnInteraction, {once:true});
-          }
-        }, 200);
-      }).catch(()=>{
-        // muted autoplay also blocked (rare) — try again with muted and then enable sound on interaction
+        markReady();
+        // stay muted - user can tap unmuteBtn to enable sound
+      }).catch((e)=>{
+        console.log('autoplay blocked', e);
+        // show fallback but still try to play muted again
         video.muted = true;
-        video.play().catch(()=>{});
-        const enable = ()=>{
-          video.muted = false;
-          video.volume = 1;
-          video.play().catch(()=>{});
-          document.removeEventListener('click', enable);
-          document.removeEventListener('touchstart', enable);
-        };
-        document.addEventListener('click', enable, {once:true});
-        document.addEventListener('touchstart', enable, {once:true});
+        video.play().catch(()=>{ showFallback(); });
+        // do NOT require touch - will retry on next frame
+        setTimeout(autoStartMuted, 500);
       });
+    } else {
+      // older browsers
+      markReady();
     }
   };
-  autoStartWithSound();
+  // try immediately and also on DOM ready
+  autoStartMuted();
+  document.addEventListener('DOMContentLoaded', autoStartMuted, {once:true});
+  window.addEventListener('load', autoStartMuted, {once:true});
+  // retry once more after 300ms for slow phones
+  setTimeout(autoStartMuted, 300);
 
   video.addEventListener('loadedmetadata', ()=>{
     startFallbackLoader();
@@ -1866,39 +1878,57 @@ if(video){
   video.addEventListener('error', ()=>{
     clearInterval(loaderInterval);
     if(rafId) cancelAnimationFrame(rafId);
+    const fb=document.getElementById('videoFallback');
+    if(fb){ fb.classList.remove('hidden'); fb.classList.add('flex'); }
+    video.classList.add('is-ready');
     startFallbackLoader();
-    setTimeout(hideLoader, 3500);
+    setTimeout(hideLoader, 2500);
   });
-  // if video doesn't start in 700ms, ensure fallback + is-ready
+  // if video doesn't start in 800ms, show it anyway + ensure fallback visible on phone
   setTimeout(()=>{
     if(loaderInterval===null && rafId===null) startFallbackLoader();
-    if(video.readyState < 2) video.classList.add('is-ready'); // show poster/black smoothly
-  }, 700);
+    if(video.readyState < 2){
+      video.classList.add('is-ready');
+      // on phone with slow network, show fallback logo while video buffers
+      const isPhone = window.innerWidth < 768 || /iPhone|iPad|Android/i.test(navigator.userAgent);
+      if(isPhone && video.readyState < 3){
+        const fb=document.getElementById('videoFallback');
+        if(fb && video.currentTime < 0.3){
+          fb.classList.remove('hidden'); fb.classList.add('flex');
+          // hide fallback once video actually plays
+          video.addEventListener('play', ()=>{ fb.classList.add('hidden'); fb.classList.remove('flex'); }, {once:true});
+        }
+      }
+    }
+  }, 800);
 } else {
   startFallbackLoader();
-  setTimeout(hideLoader, 3400);
+  const fb=document.getElementById('videoFallback');
+  if(fb){ fb.classList.remove('hidden'); fb.classList.add('flex'); }
+  setTimeout(hideLoader, 3000);
 }
 
-// click video/loader to toggle mute or resume with sound
+// click video/loader to toggle mute - tap does NOT require to start video, video already auto-started muted
 if(video){
   video.addEventListener('click', ()=> toggleMute());
   document.getElementById('loader')?.addEventListener('click', (e)=>{
     if(e.target.closest('button')) return;
-    if(video.paused){
-      video.muted = false;
-      video.volume = 1;
-      video.play().catch(()=>{});
-      const btn = document.getElementById('unmuteBtn');
-      if(btn) btn.innerHTML = '<i class="fa-solid fa-volume-high text-sm"></i>';
-    } else {
-      // tap toggles mute
-      toggleMute();
-    }
+    // single tap toggles mute (video already playing muted)
+    toggleMute();
   });
 }
 
-// failsafe hide after 12s max (in case long video)
-setTimeout(()=>{ if(!loaderDone) hideLoader(); }, 12000);
+// phone: ensure video auto-starts even if browser paused it - retry on visibility
+document.addEventListener('visibilitychange', ()=>{
+  if(!document.hidden && video && video.paused && !loaderDone){
+    video.muted = true;
+    video.play().catch(()=>{});
+  }
+});
+
+// failsafe hide - phone should auto-hide quickly (4s) even if video still loading
+const isPhoneFS = window.innerWidth < 768 || /iPhone|iPad|Android/i.test(navigator.userAgent);
+setTimeout(()=>{ if(!loaderDone) hideLoader(); }, isPhoneFS ? 4500 : 7000);
 
 // NAV SCROLL
 const nav = document.getElementById('navbar');
@@ -2299,6 +2329,7 @@ function closeModal(){
   document.getElementById('applyModal').classList.add('hidden');
   document.body.style.overflow='';
 }
+function esc(s){ return String(s||'').replace(/[&<>"']/g, m=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 const STORAGE_KEY = 'rbm_applications';
 function getApplications(){
   try{ return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }catch(e){ return []; }
@@ -2551,7 +2582,7 @@ function toggleNotif(){
     if(bellCount) bellCount.textContent=apps.length;
     if(list){
       if(apps.length===0) list.innerHTML='<div class="text-xs text-white/50 p-4 text-center">No new applications</div>';
-      else list.innerHTML=apps.map(a=>`<div class="glass rounded-xl p-3 flex gap-3"><div class="w-8 h-8 rounded-full bg-amber flex items-center justify-center text-ink text-xs font-bold">${a.name[0]}</div><div class="flex-1"><div class="text-xs font-bold">${a.name} • ${a.city}</div><div class="text-xs text-white/50">${a.jobTitle}</div><div class="text-[11px] text-white/30">${new Date(a.date).toLocaleString()}</div></div></div>`).join('');
+      else list.innerHTML=apps.map(a=>`<div class="glass rounded-xl p-3 flex gap-3"><div class="w-8 h-8 rounded-full bg-amber flex items-center justify-center text-ink text-xs font-bold">${esc(a.name)[0]}</div><div class="flex-1"><div class="text-xs font-bold">${esc(a.name)} • ${esc(a.city)}</div><div class="text-xs text-white/50">${esc(a.jobTitle)}</div><div class="text-[11px] text-white/30">${new Date(a.date).toLocaleString()}</div></div></div>`).join('');
     }
   } else d.classList.add('hidden');
 }
@@ -2625,10 +2656,10 @@ function renderMyApps(){
   grid.innerHTML=filtered.map(a=>`
     <div class="glass rounded-2xl p-4">
       <div class="flex items-center justify-between">
-        <span class="text-xs font-bold text-amber">${a.jobTitle}</span>
+        <span class="text-xs font-bold text-amber">${esc(a.jobTitle)}</span>
         <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${a.status==='Hired'?'bg-emerald-500 text-white':a.status==='Rejected'?'bg-red-500 text-white':a.status==='Interview'?'bg-cyan-500 text-ink':'bg-amber text-ink'}">${a.status}</span>
       </div>
-      <div class="text-sm font-bold mt-2">${a.name} • ${a.city}</div>
+      <div class="text-sm font-bold mt-2">${esc(a.name)} • ${esc(a.city)}</div>
       <div class="text-xs text-white/50">${a.phone} • ${a.exp}</div>
       <div class="flex gap-1.5 mt-3 flex-wrap">
         ${a.docs.split(',').map(d=>`<span class="text-[11px] bg-white/5 border border-white/10 px-2 py-1 rounded-full">${d.trim()}</span>`).join('')}
@@ -3222,8 +3253,44 @@ document.addEventListener('keydown', (e)=>{
     <span id="notifCount" class="bg-amber text-ink text-xs font-bold px-2 py-0.5 rounded-full">0 new</span>
   </div>
   <div id="notifList" class="mt-3 space-y-2 max-h-[320px] overflow-auto"></div>
-  <a href="./applications.html" target="_blank" class="block text-center text-xs text-amber mt-3 hover:underline">View all in tracker →</a>
+  <a href="javascript:void(0)" onclick="handleTrackerAccess()" class="block text-center text-xs text-amber mt-3 hover:underline">View all in tracker → (company only)</a>
 </div>
+
+<script>
+// === TWO WEBSITES SEPARATION: Company public site vs Tracker private ===
+function isCompanyUserClient(){
+  try{
+    const u = JSON.parse(localStorage.getItem('rbm_company_user') || localStorage.getItem('rbm_user') || 'null');
+    if(!u) return false;
+    const r=(u.role||'').toLowerCase();
+    return r.includes('company')||r.includes('admin')||r.includes('employer')||r.includes('owner')||!!u.isCompany;
+  }catch(e){return false;}
+}
+function updateCompanyVisibility(){
+  const isComp = isCompanyUserClient();
+  document.querySelectorAll('.company-only').forEach(el=>{
+    if(isComp) el.classList.add('visible');
+    else el.classList.remove('visible');
+  });
+}
+function handleTrackerAccess(){
+  const trackerUrl = location.protocol==='file:' ? './applications.html' : '/tracker';
+  // Separate website handling: file:// vs http
+  if(isCompanyUserClient()){
+    window.open(trackerUrl, '_blank');
+  } else {
+    if(confirm('Tracker is company-only (separate website).\n\n• This site (Company Website): PUBLIC for everyone to view jobs & apply\n• Tracker ('+trackerUrl+'): PRIVATE for RBM company staff only to manage applications\n\nCompany login required.\nDemo: phone 9949811742, OTP 123456 or password rbm@2026\n\nGo to tracker login now?')){
+      window.open(trackerUrl, '_blank');
+    }
+  }
+}
+document.addEventListener('DOMContentLoaded', updateCompanyVisibility);
+setInterval(updateCompanyVisibility, 2000);
+const _origUpdateAuthUI2 = window.updateAuthUI;
+if(typeof _origUpdateAuthUI2 === 'function'){
+  window.updateAuthUI = function(){ _origUpdateAuthUI2(); updateCompanyVisibility(); };
+}
+</script>
 
 </body>
 </html>
